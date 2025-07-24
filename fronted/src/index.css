@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #5f6fff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.active hr{
+    @apply block
+}
+
+::-webkit-scrollbar{
+  @apply hidden;
+}
