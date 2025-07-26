@@ -19,7 +19,6 @@ const Appointment = () => {
     hasAppointmentConflict,
     getUserAppointments,
     isAuthenticated,
-    processPayment,
   } = useContext(AppContext);
   const navigate = useNavigate();
   const [docInfo, setDocInfo] = useState(null);

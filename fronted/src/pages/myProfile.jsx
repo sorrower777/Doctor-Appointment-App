@@ -18,7 +18,7 @@ const MyProfile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm bg-white/80 border border-white/20">
+        <div className=" rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm bg-white/80 border border-white/20">
           {/* Header Section */}
           <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 px-8 py-12">
             <div className="absolute inset-0 bg-black/10"></div>
