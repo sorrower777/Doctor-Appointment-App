@@ -39,23 +39,23 @@ const Doctor = () => {
         <p className='text-gray-600 text-lg'>Browse through our qualified doctors specializing in {speciality || 'all specialties'}</p>
       </div>
       <div className='flex flex-col lg:flex-row items-start gap-8'>
-        <div className='flex lg:flex-col gap-3 text-sm text-gray-600 lg:min-w-[250px] overflow-x-auto lg:overflow-visible pb-2 lg:pb-0'>
-          <p onClick={() => speciality === 'General physician' ? navigate('/doctors') : navigate('/doctors/General physician')} className={`whitespace-nowrap lg:whitespace-normal px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "General physician" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
+        <div className='flex flex-col gap-3 text-sm text-gray-600 lg:min-w-[250px] w-full lg:w-auto'>
+          <p onClick={() => speciality === 'General physician' ? navigate('/doctors') : navigate('/doctors/General physician')} className={`px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "General physician" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
             General physician <span className='text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2'>({getAvailableCount('General physician')} available)</span>
           </p>
-          <p onClick={() => speciality === 'Gynecologist' ? navigate('/doctors') : navigate('/doctors/Gynecologist')} className={`whitespace-nowrap lg:whitespace-normal px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Gynecologist" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
+          <p onClick={() => speciality === 'Gynecologist' ? navigate('/doctors') : navigate('/doctors/Gynecologist')} className={`px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Gynecologist" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
             Gynecologist <span className='text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2'>({getAvailableCount('Gynecologist')} available)</span>
           </p>
-          <p onClick={() => speciality === 'Dermatologist' ? navigate('/doctors') : navigate('/doctors/Dermatologist')} className={`whitespace-nowrap lg:whitespace-normal px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Dermatologist" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
+          <p onClick={() => speciality === 'Dermatologist' ? navigate('/doctors') : navigate('/doctors/Dermatologist')} className={`px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Dermatologist" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
             Dermatologist <span className='text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2'>({getAvailableCount('Dermatologist')} available)</span>
           </p>
-          <p onClick={() => speciality === 'Pediatricians' ? navigate('/doctors') : navigate('/doctors/Pediatricians')} className={`whitespace-nowrap lg:whitespace-normal px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Pediatricians" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
+          <p onClick={() => speciality === 'Pediatricians' ? navigate('/doctors') : navigate('/doctors/Pediatricians')} className={`px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Pediatricians" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
             Pediatricians <span className='text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2'>({getAvailableCount('Pediatricians')} available)</span>
           </p>
-          <p onClick={() => speciality === 'Neurologist' ? navigate('/doctors') : navigate('/doctors/Neurologist')} className={`whitespace-nowrap lg:whitespace-normal px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Neurologist" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
+          <p onClick={() => speciality === 'Neurologist' ? navigate('/doctors') : navigate('/doctors/Neurologist')} className={`px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Neurologist" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
             Neurologist <span className='text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2'>({getAvailableCount('Neurologist')} available)</span>
           </p>
-          <p onClick={() => speciality === 'Gastroenterologist' ? navigate('/doctors') : navigate('/doctors/Gastroenterologist')} className={`whitespace-nowrap lg:whitespace-normal px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Gastroenterologist" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
+          <p onClick={() => speciality === 'Gastroenterologist' ? navigate('/doctors') : navigate('/doctors/Gastroenterologist')} className={`px-4 py-3 border border-gray-300 rounded-lg transition-all cursor-pointer hover:bg-gray-50 ${speciality === "Gastroenterologist" ? "bg-indigo-100 text-indigo-700 border-indigo-300 font-medium": ""}`}>
             Gastroenterologist <span className='text-xs bg-gray-200 px-2 py-0.5 rounded-full ml-2'>({getAvailableCount('Gastroenterologist')} available)</span>
           </p>
         </div>
