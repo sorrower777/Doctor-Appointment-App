@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import { assets } from "../../assets/assets_admin/assets";
+import { AdminContext } from "../../context/AdminContext";
+import { useContext } from "react";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const AddDoctor = () => {
     const[doctorImage, setDoctorImage] = useState(false);
@@ -13,9 +17,61 @@ const AddDoctor = () => {
     const[degree, setDegree] = useState('');
     const[address1, setAddress1] = useState('');
     const[address2, setAddress2] = useState('');
+
+    const {backendUrl, aToken} = useContext(AdminContext);
+
+    const onSubmitHandler = async (event) => {
+        event.preventDefault()
+
+        try {
+          if(!doctorImage){
+            return toast.error("Please upload a doctor image");
+          }
+          
+          const formData = new FormData();
+          formData.append('image', doctorImage);
+          formData.append('name', name);
+          formData.append('email', email);
+          formData.append('password', password);
+          formData.append('experience', experience);
+          formData.append('fees', Number(fees));
+          formData.append('about', about);
+          formData.append('speciality', specialty);
+          formData.append('degree', degree);
+          formData.append('address', JSON.stringify({line1: address1, line2: address2}));
+
+          // console.log formData
+          formData.forEach((value, key) => {
+            console.log(`${key}: ${value}`);
+          })
+          const {data} = await axios.post(backendUrl + '/api/admin/add-doctor', formData, {headers: {'atoken': aToken}})
+          if(data.success) {
+            toast.success(data.message);
+            // Reset form after successful submission
+            setDoctorImage(false);
+            setName('');
+            setEmail('');
+            setPassword('');
+            setExperience('1 Year');
+            setFees('');
+            setAbout('');
+            setSpecialty('General physician');
+            setDegree('');
+            setAddress1('');
+            setAddress2('');
+          }
+          else {
+            toast.error(data.message);
+          }
+
+        } catch (error) {
+          console.error("Error adding doctor:", error);
+          toast.error("Network error. Please try again.");
+        }
+    }
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white">
-      <form className="space-y-6">
+      <form onSubmit={onSubmitHandler} className="space-y-6">
         <div className="border-b border-gray-200 pb-4">
           <h1 className="text-2xl font-bold text-gray-900">Add Doctor</h1>
           <p className="text-sm text-gray-600 mt-1">Add a new doctor to your medical practice</p>
@@ -161,7 +217,7 @@ const AddDoctor = () => {
         <div className="bg-gray-50 p-4 rounded-lg">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">About Doctor</h3>
           <textarea
-            onChange={(e) => setAbout(e.target.value)}
+            onChange={(e) => setAbout(e.target.value)} value={about}
             placeholder="Write a brief description about the doctor's background, expertise, and approach to patient care..."
             rows={4}
             required
