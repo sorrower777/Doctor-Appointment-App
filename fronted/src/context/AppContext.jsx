@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect } from "react";
-import { doctors } from "../assets/assets/assets_frontend/assets";
 import { toast } from "react-toastify";
+import axios from "axios";
+
+
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AppContext = createContext();
@@ -317,7 +319,8 @@ const AppContextProvider = (props) => {
     );
     return true;
   };
-
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const [doctors, setDoctors] = useState([]);
   const value = {
     doctors,
     user,
@@ -336,6 +339,26 @@ const AppContextProvider = (props) => {
     processPayment,
     removePastAppointment,
   };
+
+  const getDoctorsData = async () => {
+    try {
+      const {data} = await axios.get(backendUrl + '/api/doctor/list')
+      if (data.success) {
+        setDoctors(data.doctors)
+      }else{
+        toast.error(data.message);
+      }
+    }
+    catch (error) {
+      console.log(error)
+      toast.error("Failed to fetch doctors data");
+    }
+  }
+
+  useEffect(() => {
+    getDoctorsData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AppContext.Provider value={value}>{props.children}</AppContext.Provider>
