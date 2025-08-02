@@ -21,7 +21,7 @@ const AddDoctor = () => {
     const {backendUrl, aToken} = useContext(AdminContext);
 
     const onSubmitHandler = async (event) => {
-        event.preventDefault()
+        event.preventDefault() 
 
         try {
           if(!doctorImage){

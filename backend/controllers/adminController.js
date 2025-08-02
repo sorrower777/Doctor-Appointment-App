@@ -82,5 +82,45 @@ const loginAdmin = async(req,res) => {
         })
     }
 }
+// API for getting all doctors
+const allDoctors = async (req, res) => {
+    try{
+        const doctors = await doctorModel.find({}).select('-password')
+        res.json({success: true, doctors})
+    }
+    catch (error) {
+        console.log(error)
+        res.json({success: false, message: error.message})
+    }
+}
 
-export { addDoctor, loginAdmin };
+// API for changing doctor availability
+const changeAvailability = async (req, res) => {
+    try {
+        const { doctorId } = req.body;
+        
+        // Find the doctor and toggle availability
+        const doctor = await doctorModel.findById(doctorId);
+        if (!doctor) {
+            return res.json({ success: false, message: "Doctor not found" });
+        }
+        
+        // Toggle the availability status
+        const updatedDoctor = await doctorModel.findByIdAndUpdate(
+            doctorId, 
+            { available: !doctor.available }, 
+            { new: true }
+        );
+        
+        res.json({ 
+            success: true, 
+            message: `Doctor availability ${updatedDoctor.available ? 'enabled' : 'disabled'}`,
+            doctor: updatedDoctor 
+        });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export { addDoctor, loginAdmin, allDoctors, changeAvailability };
