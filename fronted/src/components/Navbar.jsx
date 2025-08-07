@@ -9,7 +9,7 @@ const Navbar = () => {
     const navigate = useNavigate();
     const [showMenu, setShowMenu] = useState(false);
     const { user, logout, isAuthenticated, getUpcomingAppointments } = useContext(AppContext)
-    const upcomingAppointments = getUpcomingAppointments()
+    const upcomingAppointments = getUpcomingAppointments()    
   return (
     <div className='flex items-center justify-between text-sm py-4 mb-5 border-b p-4 border-b-gray-400'>
         <img onClick={() =>navigate('/')} className='w-44 cursor-pointer' src={assets.logo} alt="Logo" />

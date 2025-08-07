@@ -9,7 +9,7 @@ const Login = () => {
   const { login, register, isLoading, isAuthenticated } =
     useContext(AppContext);
 
-  const [state, setState] = useState("Login");
+  const [state, setState] = useState("Sign Up");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -160,7 +160,7 @@ const Login = () => {
             onChange={(e) => {
               setEmail(e.target.value);
               if (errors.email) setErrors({ ...errors, email: "" });
-            }}
+            }} 
             value={email}
             placeholder="Enter your email"
             required
