@@ -31,7 +31,7 @@ const App = () => {
           path="/my-profile"
           element={
             <ProtectedRoute>
-              <MyProfile />
+              <MyProfile/>
             </ProtectedRoute>
           }
         />

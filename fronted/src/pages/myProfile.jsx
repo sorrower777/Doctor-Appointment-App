@@ -1,21 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { assets } from "../assets/assets/assets_frontend/assets";
+import { AppContext } from "../context/AppContext.jsx";
 
 const MyProfile = () => {
-  const [userData, setUserData] = useState({
-    name: "Edward Vincebt",
-    image: assets.profile_pic,
-    email: "abcd@gmail.com",
-    phone: "+1234567890",
-    address: {
-      line1: "57th Cross, Richmond ",
-      line2: "Circle, Church Road, London",
-    },
-    gender: "Male",
-    dob: "2000-01-01",
-  });
+  const { userData, setUserData, updateProfile, isLoading } = useContext(AppContext);
   const [isEdit, setIsEdit] = useState(false);
-  return (
+
+  const handleSave = async () => {
+    const success = await updateProfile(userData);
+    if (success) {
+      setIsEdit(false);
+    }
+  };
+
+  return userData && (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className=" rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm bg-white/80 border border-white/20">
@@ -25,7 +23,7 @@ const MyProfile = () => {
             <div className="relative flex flex-col items-center">
               <div className="relative group">
                 <img
-                  src={userData.image}
+                  src={userData.image || assets.profile_pic}
                   alt="Profile"
                   className="w-32 h-32 rounded-full border-4 border-white shadow-2xl object-cover transition-transform duration-300 group-hover:scale-105"
                 />
@@ -35,7 +33,7 @@ const MyProfile = () => {
                 {isEdit ? (
                   <input
                     type="text"
-                    value={userData.name}
+                    value={userData.name || ''}
                     onChange={(e) =>
                       setUserData((prev) => ({ ...prev, name: e.target.value }))
                     }
@@ -43,7 +41,7 @@ const MyProfile = () => {
                   />
                 ) : (
                   <h1 className="text-3xl font-bold text-white drop-shadow-lg">
-                    {userData.name}
+                    {userData.name || 'User'}
                   </h1>
                 )}
                 <div className="mt-2 flex items-center justify-center">
@@ -69,7 +67,7 @@ const MyProfile = () => {
                     {isEdit ? (
                       <input
                         type="email"
-                        value={userData.email}
+                        value={userData.email || ''}
                         onChange={(e) =>
                           setUserData((prev) => ({
                             ...prev,
@@ -80,7 +78,7 @@ const MyProfile = () => {
                       />
                     ) : (
                       <p className="text-gray-800 bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
-                        {userData.email}
+                        {userData.email || 'Not provided'}
                       </p>
                     )}
                   </div>
@@ -91,7 +89,7 @@ const MyProfile = () => {
                     {isEdit ? (
                       <input
                         type="tel"
-                        value={userData.phone}
+                        value={userData.phone || ''}
                         onChange={(e) =>
                           setUserData((prev) => ({
                             ...prev,
@@ -102,7 +100,7 @@ const MyProfile = () => {
                       />
                     ) : (
                       <p className="text-gray-800 bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
-                        {userData.phone}
+                        {userData.phone || 'Not provided'}
                       </p>
                     )}
                   </div>
@@ -117,10 +115,10 @@ const MyProfile = () => {
                         onChange={(e) =>
                           setUserData((prev) => ({
                             ...prev,
-                            address: { ...prev.address, line1: e.target.value },
+                            address: { ...prev.address || {}, line1: e.target.value },
                           }))
                         }
-                        value={userData.address.line1}
+                        value={userData.address?.line1 || ''}
                         type="text"
                         placeholder="Address Line 1"
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all duration-300 bg-white shadow-sm"
@@ -129,10 +127,10 @@ const MyProfile = () => {
                         onChange={(e) =>
                           setUserData((prev) => ({
                             ...prev,
-                            address: { ...prev.address, line2: e.target.value },
+                            address: { ...prev.address || {}, line2: e.target.value },
                           }))
                         }
-                        value={userData.address.line2}
+                        value={userData.address?.line2 || ''}
                         type="text"
                         placeholder="Address Line 2"
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all duration-300 bg-white shadow-sm"
@@ -140,8 +138,8 @@ const MyProfile = () => {
                     </div>
                   ) : (
                     <div className="text-gray-800 bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
-                      <p>{userData.address.line1}</p>
-                      <p>{userData.address.line2}</p>
+                      <p>{userData.address?.line1 || 'Not provided'}</p>
+                      <p>{userData.address?.line2 || 'Not provided'}</p>
                     </div>
                   )}
                 </div>
@@ -161,7 +159,7 @@ const MyProfile = () => {
                   </label>
                   {isEdit ? (
                     <select
-                      value={userData.gender}
+                      value={userData.gender || 'Male'}
                       onChange={(e) =>
                         setUserData((prev) => ({
                           ...prev,
@@ -176,7 +174,7 @@ const MyProfile = () => {
                     </select>
                   ) : (
                     <p className="text-gray-800 bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
-                      {userData.gender}
+                      {userData.gender || 'Not specified'}
                     </p>
                   )}
                 </div>
@@ -187,7 +185,7 @@ const MyProfile = () => {
                   {isEdit ? (
                     <input
                       type="date"
-                      value={userData.dob}
+                      value={userData.dob || ''}
                       onChange={(e) =>
                         setUserData((prev) => ({
                           ...prev,
@@ -198,7 +196,7 @@ const MyProfile = () => {
                     />
                   ) : (
                     <p className="text-gray-800 bg-white px-4 py-3 rounded-xl border border-gray-100 shadow-sm">
-                      {userData.dob}
+                      {userData.dob || 'Not provided'}
                     </p>
                   )}
                 </div>
@@ -209,24 +207,37 @@ const MyProfile = () => {
             <div className="flex justify-center pt-4">
               {isEdit ? (
                 <button
-                  onClick={() => setIsEdit(false)}
-                  className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-200"
+                  onClick={handleSave}
+                  disabled={isLoading}
+                  className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   <span className="flex items-center">
-                    <svg
-                      className="w-5 h-5 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 13l4 4L19 7"
-                      ></path>
-                    </svg>
-                    Save Changes
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          ></path>
+                        </svg>
+                        Save Changes
+                      </>
+                    )}
                   </span>
                 </button>
               ) : (

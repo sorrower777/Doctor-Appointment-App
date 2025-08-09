@@ -33,8 +33,19 @@ const registerUser = async (req, res) => {
          const user = await newUser.save()
 
         const token = JWT.sign({id: user._id}, process.env.JWT_SECRET)
+        
+        // Return user data without password for registration
+        const userInfo = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            address: user.address,
+            dob: user.dob,
+            gender: user.gender
+        }
 
-        res.json({success:true, token})
+        res.json({success:true, token, user: userInfo})
     }
     catch (error) {
         return res.status(500).json({success:false, message:error.message})
@@ -53,7 +64,17 @@ const loginUser = async (req, res) => {
         const isMatch = await bcrypt.compare(password,user.password)
         if(isMatch) {
             const token = JWT.sign({id: user._id}, process.env.JWT_SECRET)
-            res.json({success:true, token})
+            // Return user data without password
+            const userInfo = {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                address: user.address,
+                dob: user.dob,
+                gender: user.gender
+            }
+            res.json({success:true, token, user: userInfo})
         }else {
             res.json({success:false, message:'Invalid credentials'})
         }

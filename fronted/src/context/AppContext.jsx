@@ -2,50 +2,58 @@ import React, { createContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
 
-
-
 // eslint-disable-next-line react-refresh/only-export-components
 export const AppContext = createContext();
 
 const AppContextProvider = (props) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  
+  // Function to validate token format
+  const isValidToken = (token) => {
+    if (!token || token === 'null' || token === 'undefined') return false;
+    // Basic JWT format check - should have 3 parts separated by dots
+    const parts = token.split('.');
+    return parts.length === 3;
+  };
+
+  // Get token from localStorage with validation
+  const getValidToken = () => {
+    const storedToken = localStorage.getItem("token");
+    if (isValidToken(storedToken)) {
+      return storedToken;
+    } else {
+      // Clear invalid token
+      localStorage.removeItem("token");
+      return null;
+    }
+  };
+
+  const [token, setToken] = useState(getValidToken());
   const [isLoading, setIsLoading] = useState(false);
   const [appointments, setAppointments] = useState([]);
+  const [userData, setUserData] = useState(false)  
 
   // Load user data and appointments from localStorage on app start
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    if (savedUser && token) {
-      setUser(JSON.parse(savedUser));
+    if (savedUser && savedUser !== 'undefined' && savedUser !== 'null' && token) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error("Error parsing saved user data:", error);
+        localStorage.removeItem("user");
+      }
     }
 
     // Load user's appointments
     const savedAppointments = localStorage.getItem("appointments");
-    if (savedAppointments && token) {
-      setAppointments(JSON.parse(savedAppointments));
-    }
-
-    // Initialize demo users if not exists
-    const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    if (existingUsers.length === 0) {
-      const demoUsers = [
-        {
-          id: 1,
-          name: "Demo User",
-          email: "demo@example.com",
-          password: "demo123",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          name: "John Doe",
-          email: "john@example.com",
-          password: "john123",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      localStorage.setItem("users", JSON.stringify(demoUsers));
+    if (savedAppointments && savedAppointments !== 'undefined' && savedAppointments !== 'null' && token) {
+      try {
+        setAppointments(JSON.parse(savedAppointments));
+      } catch (error) {
+        console.error("Error parsing saved appointments:", error);
+        localStorage.removeItem("appointments");
+      }
     }
   }, [token]);
 
@@ -53,54 +61,51 @@ const AppContextProvider = (props) => {
   const register = async (userData) => {
     setIsLoading(true);
     try {
-      // Simulate API call - replace with actual API endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call real backend API
+      const response = await axios.post(backendUrl + '/api/user/register', {
+        name: userData.name,
+        email: userData.email,
+        password: userData.password
+      });
 
-      // Check if user already exists (simulate)
-      const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-      const userExists = existingUsers.find((u) => u.email === userData.email);
+      if (response.data.success) {
+        const { token: userToken } = response.data;
+        
+        // Validate the received token
+        if (isValidToken(userToken)) {
+          // Create user info object (backend might not return user info on register)
+          const userInfo = {
+            name: userData.name,
+            email: userData.email,
+          };
+          
+          setUser(userInfo);
+          setToken(userToken);
 
-      if (userExists) {
-        toast.error("User already exists with this email!");
+          // Save to localStorage
+          localStorage.setItem("token", userToken);
+          localStorage.setItem("user", JSON.stringify(userInfo));
+
+          toast.success("Account created successfully!");
+          setIsLoading(false);
+          return true;
+        } else {
+          toast.error("Invalid token received from server");
+          setIsLoading(false);
+          return false;
+        }
+      } else {
+        toast.error(response.data.message || "Registration failed");
         setIsLoading(false);
         return false;
       }
-
-      // Create new user
-      const newUser = {
-        id: Date.now(),
-        name: userData.name,
-        email: userData.email,
-        password: userData.password, // In real app, this should be hashed
-        createdAt: new Date().toISOString(),
-      };
-
-      // Save to localStorage (simulate database)
-      existingUsers.push(newUser);
-      localStorage.setItem("users", JSON.stringify(existingUsers));
-
-      // Generate token (simulate)
-      const userToken = `token_${newUser.id}_${Date.now()}`;
-
-      // Set user data
-      const userInfo = {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-      };
-      setUser(userInfo);
-      setToken(userToken);
-
-      // Save to localStorage
-      localStorage.setItem("token", userToken);
-      localStorage.setItem("user", JSON.stringify(userInfo));
-
-      toast.success("Account created successfully!");
-      setIsLoading(false);
-      return true;
     } catch (error) {
       console.error("Registration error:", error);
-      toast.error("Registration failed. Please try again.");
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Registration failed. Please try again.");
+      }
       setIsLoading(false);
       return false;
     }
@@ -110,43 +115,53 @@ const AppContextProvider = (props) => {
   const login = async (loginData) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Attempting login with:", { email: loginData.email });
+      // Call real backend API
+      const response = await axios.post(backendUrl + '/api/user/login', {
+        email: loginData.email,
+        password: loginData.password
+      });
 
-      // Check credentials (simulate)
-      const existingUsers = JSON.parse(localStorage.getItem("users") || "[]");
-      const foundUser = existingUsers.find(
-        (u) => u.email === loginData.email && u.password === loginData.password
-      );
+      console.log("Login response:", response.data);
 
-      if (!foundUser) {
-        toast.error("Invalid email or password!");
+      if (response.data.success) {
+        const { token: userToken, user: userInfo } = response.data;
+        
+        console.log("Received token:", userToken);
+        console.log("Received user info:", userInfo);
+        
+        // Validate the received token
+        if (isValidToken(userToken)) {
+          setUser(userInfo);
+          setToken(userToken);
+
+          // Save to localStorage
+          localStorage.setItem("token", userToken);
+          localStorage.setItem("user", JSON.stringify(userInfo));
+
+          console.log("Login successful, user set:", userInfo);
+          toast.success("Login successful!");
+          setIsLoading(false);
+          return true;
+        } else {
+          console.error("Invalid token received:", userToken);
+          toast.error("Invalid token received from server");
+          setIsLoading(false);
+          return false;
+        }
+      } else {
+        console.error("Login failed:", response.data.message);
+        toast.error(response.data.message || "Login failed");
         setIsLoading(false);
         return false;
       }
-
-      // Generate token
-      const userToken = `token_${foundUser.id}_${Date.now()}`;
-
-      // Set user data
-      const userInfo = {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-      };
-      setUser(userInfo);
-      setToken(userToken);
-
-      // Save to localStorage
-      localStorage.setItem("token", userToken);
-      localStorage.setItem("user", JSON.stringify(userInfo));
-
-      toast.success("Login successful!");
-      setIsLoading(false);
-      return true;
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Login failed. Please try again.");
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Login failed. Please try again.");
+      }
       setIsLoading(false);
       return false;
     }
@@ -319,8 +334,117 @@ const AppContextProvider = (props) => {
     );
     return true;
   };
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
   const [doctors, setDoctors] = useState([]);
+
+  const getDoctorsData = async () => {
+    try {
+      const {data} = await axios.get(backendUrl + '/api/doctor/list')
+      if (data.success) {
+        setDoctors(data.doctors)
+      }else{
+        toast.error(data.message);
+      }
+    }
+    catch (error) {
+      console.log(error)
+      toast.error("Failed to fetch doctors data");
+    }
+  }
+
+  const loadUserProfileData = async () => {
+    try {
+      // Check if token exists and is not malformed
+      if (!token || token === 'null' || token === 'undefined') {
+        setUserData(false);
+        return;
+      }
+
+      const {data} = await axios.get(backendUrl + '/api/user/get-profile', {headers:{token}})
+      if(data.success) {
+        setUserData(data.userData);
+      }else {
+        toast.error(data.message);
+        // If token is invalid, clear it
+        if (data.message && data.message.includes('jwt')) {
+          localStorage.removeItem('token');
+          setToken(null);
+          setUserData(false);
+        }
+      }
+    }catch(error) {
+      console.log(error)
+      // Check if it's a JWT error
+      if (error.response?.data?.message?.includes('jwt') || error.message?.includes('jwt')) {
+        console.log("JWT error detected, clearing token");
+        localStorage.removeItem('token');
+        setToken(null);
+        setUserData(false);
+        toast.error("Session expired. Please login again.");
+      } else {
+        toast.error("Failed to fetch user profile data");
+      }
+    }
+  }
+
+  const updateProfile = async (profileData) => {
+    try {
+      setIsLoading(true);
+      
+      // Check if token exists and is not malformed
+      if (!token || token === 'null' || token === 'undefined') {
+        toast.error("Please login again");
+        setIsLoading(false);
+        return false;
+      }
+
+      const formData = new FormData();
+      formData.append('name', profileData.name);
+      formData.append('phone', profileData.phone);
+      formData.append('address', JSON.stringify(profileData.address));
+      formData.append('dob', profileData.dob);
+      formData.append('gender', profileData.gender);
+      
+      if (profileData.image) {
+        formData.append('image', profileData.image);
+      }
+
+      const response = await axios.post(backendUrl + '/api/user/update-profile', formData, {
+        headers: { 
+          token,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        toast.success("Profile updated successfully!");
+        // Reload user profile data to get updated info
+        await loadUserProfileData();
+        setIsLoading(false);
+        return true;
+      } else {
+        toast.error(response.data.message || "Failed to update profile");
+        setIsLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.log(error);
+      setIsLoading(false);
+      
+      // Check if it's a JWT error
+      if (error.response?.data?.message?.includes('jwt') || error.message?.includes('jwt')) {
+        console.log("JWT error detected, clearing token");
+        localStorage.removeItem('token');
+        setToken(null);
+        setUserData(false);
+        toast.error("Session expired. Please login again.");
+      } else {
+        toast.error("Failed to update profile");
+      }
+      return false;
+    }
+  }
+
   const value = {
     doctors,
     user,
@@ -338,27 +462,26 @@ const AppContextProvider = (props) => {
     getUpcomingAppointments,
     processPayment,
     removePastAppointment,
+    userData,setUserData,
+    loadUserProfileData,
+    updateProfile,
+    isValidToken
   };
-
-  const getDoctorsData = async () => {
-    try {
-      const {data} = await axios.get(backendUrl + '/api/doctor/list')
-      if (data.success) {
-        setDoctors(data.doctors)
-      }else{
-        toast.error(data.message);
-      }
-    }
-    catch (error) {
-      console.log(error)
-      toast.error("Failed to fetch doctors data");
-    }
-  }
 
   useEffect(() => {
     getDoctorsData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (token){
+      loadUserProfileData();
+    }else{
+      setUserData(false);
+    }
+  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[token])
 
   return (
     <AppContext.Provider value={value}>{props.children}</AppContext.Provider>
