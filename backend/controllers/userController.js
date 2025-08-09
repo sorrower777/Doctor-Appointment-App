@@ -2,6 +2,7 @@ import validator from 'validator'
 import bcrypt from 'bcrypt'
 import JWT from 'jsonwebtoken'
 import {v2 as cloudinary} from 'cloudinary'
+import userModel from '../models/userModel.js'
 
 // API to register user
 const registerUser = async (req, res) => {
@@ -80,10 +81,35 @@ const updateProfile = async (req, res) => {
     try {
         const {userId, name, phone, address, dob, gender} = req.body
         const imageFile = req.imageFile
-        if(!name || !phone || !dob || !gender){
-            return res.json({success:false, message:"Missing Data"})
+        
+        // Check if userId exists (required for authentication)
+        if(!userId){
+            return res.json({success:false, message:"User not authenticated"})
         }
-        await userModel.findByIdAndUpdate(userId, {name,phone,address:JSON.parse(address),dob,gender})
+
+        // Build update object with only provided fields
+        const updateData = {};
+        if(name) updateData.name = name;
+        if(phone) updateData.phone = phone;
+        if(address) {
+            // Handle address - it can be either a string (JSON) or an object
+            if(typeof address === 'string') {
+                try {
+                    updateData.address = JSON.parse(address);
+                } catch (error) {
+                    return res.json({success:false, message:"Invalid address format"});
+                }
+            } else if(typeof address === 'object') {
+                updateData.address = address;
+            }
+        }
+        if(dob) updateData.dob = dob;
+        if(gender) updateData.gender = gender;
+
+        // Only update if there's data to update
+        if(Object.keys(updateData).length > 0) {
+            await userModel.findByIdAndUpdate(userId, updateData);
+        }
 
         if(imageFile) {
             const imageUpload = await cloudinary.uploader.upload(imageFile.path,{resource_type: "image"})
