@@ -5,13 +5,21 @@ import { AppContext } from "../context/AppContext.jsx";
 const MyProfile = () => {
   const { userData, setUserData, updateProfile, isLoading } = useContext(AppContext);
   const [isEdit, setIsEdit] = useState(false);
+  const [image, setImage] = useState(false);
 
   const handleSave = async () => {
-    const success = await updateProfile(userData);
+    // Include the image in the userData before updating
+    const dataToUpdate = {
+      ...userData,
+      image: image || userData.image // Include the selected image or keep existing
+    };
+    const success = await updateProfile(dataToUpdate);
     if (success) {
       setIsEdit(false);
+      setImage(false); // Reset the image state after successful update
     }
   };
+
 
   return userData && (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
@@ -21,14 +29,38 @@ const MyProfile = () => {
           <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 px-8 py-12">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative flex flex-col items-center">
-              <div className="relative group">
-                <img
-                  src={userData.image || assets.profile_pic}
+            <div className="relative flex flex-col items-center">
+              {isEdit ? (
+                <div className="flex flex-col items-center space-y-3">
+                  <label htmlFor="profile_image" className="cursor-pointer">
+                    <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-white shadow-2xl hover:shadow-3xl transition-all duration-300 bg-gray-100">
+                      <img 
+                        src={image ? URL.createObjectURL(image) : (userData.image || assets.profile_pic)} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </label>
+                  <input 
+                    onChange={(e) => {
+                      console.log('File selected:', e.target.files[0]);
+                      setImage(e.target.files[0]);
+                    }} 
+                    type="file" 
+                    id="profile_image" 
+                    accept="image/*"
+                    hidden
+                  />
+                  <p className="text-xs text-white/80 text-center">Click image to change</p>
+                </div>
+              ) : (
+                <img 
+                  className="w-36 h-36 rounded-full object-cover border-4 border-white shadow-2xl" 
+                  src={userData.image || assets.profile_pic} 
                   alt="Profile"
-                  className="w-32 h-32 rounded-full border-4 border-white shadow-2xl object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-transparent to-white/20"></div>
-              </div>
+              )}
+            </div>
               <div className="mt-6 text-center">
                 {isEdit ? (
                   <input
