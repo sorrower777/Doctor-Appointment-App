@@ -49,7 +49,12 @@ const AppContextProvider = (props) => {
     const savedAppointments = localStorage.getItem("appointments");
     if (savedAppointments && savedAppointments !== 'undefined' && savedAppointments !== 'null' && token) {
       try {
-        setAppointments(JSON.parse(savedAppointments));
+        const parsedAppointments = JSON.parse(savedAppointments);
+        // Filter out cancelled appointments from localStorage as well
+        const activeAppointments = parsedAppointments.filter(appointment => appointment.status !== 'cancelled');
+        setAppointments(activeAppointments);
+        // Update localStorage with filtered appointments
+        localStorage.setItem("appointments", JSON.stringify(activeAppointments));
       } catch (error) {
         console.error("Error parsing saved appointments:", error);
         localStorage.removeItem("appointments");
@@ -263,6 +268,8 @@ const AppContextProvider = (props) => {
 
       if (response.data.success) {
         setAppointments(response.data.appointments);
+        // Save to localStorage
+        localStorage.setItem("appointments", JSON.stringify(response.data.appointments));
       }
     } catch (error) {
       console.error("Error loading appointments:", error);
@@ -328,10 +335,11 @@ const AppContextProvider = (props) => {
     }
   };
 
-  // Get user's appointments
+  // Get user's appointments (excluding cancelled ones)
   const getUserAppointments = () => {
     if (!isAuthenticated()) return [];
-    return appointments;
+    // Filter out cancelled appointments as a safety measure
+    return appointments.filter(appointment => appointment.status !== 'cancelled');
   };
 
   // Check if user has appointment with specific doctor on specific date/time
@@ -507,6 +515,7 @@ const AppContextProvider = (props) => {
     token,
     isLoading,
     appointments: getUserAppointments(),
+    rawAppointments: appointments, // Raw appointments array for watching changes
     register,
     login,
     logout,

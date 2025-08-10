@@ -93,9 +93,6 @@ const Appointment = () => {
   };
 
   const fetchDocInfo = useCallback(() => {
-    // console.log('fetchDocInfo called with docid:', docid);
-    // console.log('Available doctors:', doctors);
-
     if (doctors && doctors.length > 0 && docid) {
       const foundDoc = doctors.find((doc) => doc._id === docid);
       setDocInfo(foundDoc);

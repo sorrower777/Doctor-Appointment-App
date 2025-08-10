@@ -208,7 +208,11 @@ const getUserAppointments = async (req, res) => {
     try {
         const userId = req.body.userId
 
-        const appointments = await appointmentModel.find({ userId })
+        // Only return appointments that are not cancelled
+        const appointments = await appointmentModel.find({ 
+            userId,
+            status: { $ne: 'cancelled' } // Exclude cancelled appointments
+        })
             .populate('doctorId', 'name speciality image fees available')
             .sort({ createdAt: -1 })
 

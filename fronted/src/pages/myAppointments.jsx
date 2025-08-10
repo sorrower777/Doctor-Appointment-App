@@ -7,7 +7,7 @@ import PaymentModal from "../components/PaymentModal";
 import ConfirmationModal from "../components/ConfirmationModal";
 
 const MyAppointments = () => {
-  const { getUserAppointments, cancelAppointment, isAuthenticated, user, processPayment, removePastAppointment } =
+  const { getUserAppointments, cancelAppointment, isAuthenticated, user, processPayment, removePastAppointment, rawAppointments, doctors } =
     useContext(AppContext);
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -32,10 +32,22 @@ const MyAppointments = () => {
     setFilteredAppointments(userAppointments);
   }, [getUserAppointments, isAuthenticated, navigate]);
 
+  // Additional effect to watch for context appointments changes
+  useEffect(() => {
+    if (isAuthenticated() && rawAppointments) {
+      const userAppointments = getUserAppointments();
+      setAppointments(userAppointments);
+      setFilteredAppointments(userAppointments);
+    }
+  }, [rawAppointments, isAuthenticated, getUserAppointments]);
+
   useEffect(() => {
     let filtered = [...appointments];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    // First, filter out any cancelled appointments as a safety measure
+    filtered = filtered.filter(apt => apt.status !== 'cancelled');
 
     // Apply filter
     if (filter === "upcoming") {
@@ -101,7 +113,11 @@ const MyAppointments = () => {
     if (appointmentToCancel) {
       const success = await cancelAppointment(appointmentToCancel.appointmentId);
       if (success) {
-        // Update local state will be handled by the context
+        // Refresh the appointments list
+        const updatedAppointments = getUserAppointments();
+        setAppointments(updatedAppointments);
+        setFilteredAppointments(updatedAppointments);
+        
         toast.success(
           `Appointment with Dr. ${appointmentToCancel.doctorName} cancelled successfully`
         );
@@ -485,9 +501,41 @@ const MyAppointments = () => {
                     {/* Actions */}
                     <div className="flex flex-col gap-2 lg:w-40">
                       <button
-                        onClick={() =>
-                          navigate(`/appointment/${appointment.doctorId}`)
-                        }
+                        onClick={() => {
+                          // Handle multiple possible doctorId formats
+                          let doctorId = null;
+                          
+                          // Try different ways to get the doctor ID
+                          if (appointment.doctorId) {
+                            if (typeof appointment.doctorId === 'string') {
+                              // Direct string ID
+                              doctorId = appointment.doctorId;
+                            } else if (appointment.doctorId._id) {
+                              // Populated object with _id
+                              doctorId = appointment.doctorId._id;
+                            }
+                          }
+                          
+                          // Fallback: try to find doctor by name in doctors list
+                          if (!doctorId && appointment.doctorName && doctors) {
+                            const foundDoctor = doctors.find(doc => 
+                              doc.name === appointment.doctorName
+                            );
+                            if (foundDoctor) {
+                              doctorId = foundDoctor._id;
+                            }
+                          }
+                          
+                          console.log('Appointment object:', appointment);
+                          console.log('Extracted doctor ID:', doctorId);
+                          
+                          if (doctorId) {
+                            navigate(`/appointment/${doctorId}`);
+                          } else {
+                            console.error('Could not determine doctor ID from appointment:', appointment);
+                            alert('Unable to navigate to doctor page. Please try again.');
+                          }
+                        }}
                         className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
                       >
                         View Doctor
