@@ -184,91 +184,154 @@ const AppContextProvider = (props) => {
   };
 
   // Book appointment function with payment
-  const bookAppointment = (appointmentData, paymentData = null) => {
+  const bookAppointment = async (appointmentData, paymentData = null) => {
     if (!isAuthenticated()) {
       toast.error("Please login to book appointments");
       return false;
     }
 
-    const newAppointment = {
-      id: `apt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      userId: user.id,
-      doctorId: appointmentData.doctorId,
-      doctorName: appointmentData.doctorName,
-      doctorImage: appointmentData.doctorImage,
-      speciality: appointmentData.speciality,
-      date: appointmentData.date,
-      time: appointmentData.time,
-      fee: appointmentData.fee,
-      status: paymentData ? "confirmed" : "pending_payment",
-      bookedAt: new Date().toISOString(),
-      address: appointmentData.address,
-      payment: paymentData || null,
-    };
+    try {
+      setIsLoading(true);
+      
+      // First, book the appointment
+      const response = await axios.post(backendUrl + '/api/user/book-appointment', {
+        doctorId: appointmentData.doctorId,
+        doctorName: appointmentData.doctorName,
+        doctorImage: appointmentData.doctorImage,
+        speciality: appointmentData.speciality,
+        date: appointmentData.date,
+        time: appointmentData.time,
+        fee: appointmentData.fee,
+        address: appointmentData.address
+      }, {
+        headers: { token }
+      });
 
-    const updatedAppointments = [...appointments, newAppointment];
-    setAppointments(updatedAppointments);
-    localStorage.setItem("appointments", JSON.stringify(updatedAppointments));
+      if (response.data.success) {
+        let appointment = response.data.appointment;
+        
+        // If payment data is provided, process payment immediately
+        if (paymentData) {
+          const paymentResponse = await axios.post(backendUrl + '/api/user/payment-appointment', {
+            appointmentId: appointment._id,
+            paymentData: paymentData
+          }, {
+            headers: { token }
+          });
 
-    if (paymentData) {
-      toast.success(
-        `Appointment booked and paid successfully with Dr. ${appointmentData.doctorName}!`
-      );
-    } else {
-      toast.success(
-        `Appointment booked with Dr. ${appointmentData.doctorName}! Please complete payment.`
-      );
+          if (paymentResponse.data.success) {
+            appointment = paymentResponse.data.appointment;
+            toast.success(
+              `Appointment booked and paid successfully with Dr. ${appointmentData.doctorName}!`
+            );
+          } else {
+            toast.error(paymentResponse.data.message || "Payment failed");
+            setIsLoading(false);
+            return false;
+          }
+        } else {
+          toast.success(
+            `Appointment booked with Dr. ${appointmentData.doctorName}! Please complete payment.`
+          );
+        }
+
+        // Refresh appointments list
+        await loadUserAppointments();
+        setIsLoading(false);
+        return appointment;
+      } else {
+        toast.error(response.data.message || "Failed to book appointment");
+        setIsLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      toast.error(error.response?.data?.message || "Failed to book appointment");
+      setIsLoading(false);
+      return false;
     }
-    return newAppointment;
+  };
+
+  // Load user appointments from backend
+  const loadUserAppointments = async () => {
+    if (!isAuthenticated()) return;
+    
+    try {
+      const response = await axios.get(backendUrl + '/api/user/appointments', {
+        headers: { token }
+      });
+
+      if (response.data.success) {
+        setAppointments(response.data.appointments);
+      }
+    } catch (error) {
+      console.error("Error loading appointments:", error);
+    }
   };
 
   // Process payment for existing appointment
-  const processPayment = (appointmentId, paymentData) => {
-    const appointmentIndex = appointments.findIndex(apt => apt.id === appointmentId);
-    if (appointmentIndex === -1) {
-      toast.error("Appointment not found");
+  const processPayment = async (appointmentId, paymentData) => {
+    if (!isAuthenticated()) {
+      toast.error("Please login first");
       return false;
     }
 
-    const updatedAppointments = [...appointments];
-    updatedAppointments[appointmentIndex] = {
-      ...updatedAppointments[appointmentIndex],
-      status: "confirmed",
-      payment: paymentData,
-      paidAt: new Date().toISOString()
-    };
+    try {
+      const response = await axios.post(backendUrl + '/api/user/payment-appointment', {
+        appointmentId,
+        paymentData
+      }, {
+        headers: { token }
+      });
 
-    setAppointments(updatedAppointments);
-    localStorage.setItem("appointments", JSON.stringify(updatedAppointments));
-
-    toast.success("Payment completed successfully!");
-    return true;
+      if (response.data.success) {
+        toast.success("Payment completed successfully!");
+        await loadUserAppointments(); // Refresh appointments
+        return true;
+      } else {
+        toast.error(response.data.message || "Payment failed");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      toast.error(error.response?.data?.message || "Payment failed");
+      return false;
+    }
   };
 
   // Cancel appointment function
-  const cancelAppointment = (appointmentId) => {
-    const appointment = appointments.find((apt) => apt.id === appointmentId);
-    if (!appointment) {
-      toast.error("Appointment not found");
+  const cancelAppointment = async (appointmentId) => {
+    if (!isAuthenticated()) {
+      toast.error("Please login first");
       return false;
     }
 
-    const updatedAppointments = appointments.filter(
-      (apt) => apt.id !== appointmentId
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem("appointments", JSON.stringify(updatedAppointments));
+    try {
+      const response = await axios.post(backendUrl + '/api/user/cancel-appointment', {
+        appointmentId
+      }, {
+        headers: { token }
+      });
 
-    toast.success(
-      `Appointment with Dr. ${appointment.doctorName} has been cancelled`
-    );
-    return true;
+      if (response.data.success) {
+        toast.success("Appointment cancelled successfully");
+        await loadUserAppointments(); // Refresh appointments
+        return true;
+      } else {
+        toast.error(response.data.message || "Failed to cancel appointment");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      toast.error(error.response?.data?.message || "Failed to cancel appointment");
+      return false;
+    }
   };
 
   // Get user's appointments
   const getUserAppointments = () => {
     if (!isAuthenticated()) return [];
-    return appointments.filter((apt) => apt.userId === user.id);
+    return appointments;
   };
 
   // Check if user has appointment with specific doctor on specific date/time
@@ -276,7 +339,6 @@ const AppContextProvider = (props) => {
     if (!isAuthenticated()) return false;
     return appointments.some(
       (apt) =>
-        apt.userId === user.id &&
         apt.doctorId === doctorId &&
         apt.date === date &&
         apt.time === time &&
@@ -291,7 +353,6 @@ const AppContextProvider = (props) => {
     return appointments
       .filter(
         (apt) =>
-          apt.userId === user.id &&
           apt.date >= today &&
           apt.status === "confirmed"
       )
@@ -302,37 +363,32 @@ const AppContextProvider = (props) => {
   };
 
   // Remove past appointment function
-  const removePastAppointment = (appointmentId) => {
-    const appointment = appointments.find((apt) => apt.id === appointmentId);
-    if (!appointment) {
-      toast.error("Appointment not found");
+  const removePastAppointment = async (appointmentId) => {
+    if (!isAuthenticated()) {
+      toast.error("Please login first");
       return false;
     }
 
-    // Check if appointment is actually in the past
-    const appointmentDateTime = new Date(appointment.date + " " + appointment.time);
-    const now = new Date();
-    
-    if (appointmentDateTime >= now) {
-      toast.error("You can only remove past appointments. Use cancel for future appointments.");
+    try {
+      const response = await axios.post(backendUrl + '/api/user/cancel-appointment', {
+        appointmentId
+      }, {
+        headers: { token }
+      });
+
+      if (response.data.success) {
+        toast.success("Past appointment removed successfully");
+        await loadUserAppointments(); // Refresh appointments
+        return true;
+      } else {
+        toast.error(response.data.message || "Failed to remove appointment");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error removing appointment:", error);
+      toast.error(error.response?.data?.message || "Failed to remove appointment");
       return false;
     }
-
-    if (!isAuthenticated() || appointment.userId !== user.id) {
-      toast.error("Unauthorized to remove this appointment");
-      return false;
-    }
-
-    const updatedAppointments = appointments.filter(
-      (apt) => apt.id !== appointmentId
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem("appointments", JSON.stringify(updatedAppointments));
-
-    toast.success(
-      `Past appointment with Dr. ${appointment.doctorName} has been removed from your history`
-    );
-    return true;
   };
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
   const [doctors, setDoctors] = useState([]);
@@ -462,6 +518,7 @@ const AppContextProvider = (props) => {
     getUpcomingAppointments,
     processPayment,
     removePastAppointment,
+    loadUserAppointments,
     userData,setUserData,
     loadUserProfileData,
     updateProfile,
@@ -476,8 +533,10 @@ const AppContextProvider = (props) => {
   useEffect(() => {
     if (token){
       loadUserProfileData();
+      loadUserAppointments(); // Load appointments when user is authenticated
     }else{
       setUserData(false);
+      setAppointments([]); // Clear appointments when user logs out
     }
   
   // eslint-disable-next-line react-hooks/exhaustive-deps

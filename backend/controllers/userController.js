@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt'
 import JWT from 'jsonwebtoken'
 import {v2 as cloudinary} from 'cloudinary'
 import userModel from '../models/userModel.js'
+import appointmentModel from '../models/appointmentModel.js'
+import doctorModel from '../models/doctorModel.js'
 
 // API to register user
 const registerUser = async (req, res) => {
@@ -146,4 +148,182 @@ const updateProfile = async (req, res) => {
     }
 }
 
-export {registerUser, loginUser, getProfile, updateProfile}
+// API to book appointment
+const bookAppointment = async (req, res) => {
+    try {
+        const { doctorId, date, time, fee, speciality, address, doctorName, doctorImage } = req.body
+        const userId = req.body.userId
+
+        // Validate required fields
+        if (!doctorId || !date || !time || !fee || !speciality || !address || !doctorName || !doctorImage) {
+            return res.status(400).json({success:false, message:"Missing required appointment details"})
+        }
+
+        // Check if doctor exists
+        const doctor = await doctorModel.findById(doctorId)
+        if (!doctor) {
+            return res.status(404).json({success:false, message:"Doctor not found"})
+        }
+
+        // Check if user already has appointment with this doctor at this time
+        const existingAppointment = await appointmentModel.findOne({
+            userId,
+            doctorId,
+            date,
+            time,
+            status: { $in: ['pending_payment', 'confirmed'] }
+        })
+
+        if (existingAppointment) {
+            return res.status(400).json({success:false, message:"You already have an appointment with this doctor at this time"})
+        }
+
+        // Create new appointment
+        const appointmentData = {
+            userId,
+            doctorId,
+            doctorName,
+            doctorImage,
+            speciality,
+            date,
+            time,
+            fee,
+            address,
+            status: 'pending_payment'
+        }
+
+        const newAppointment = new appointmentModel(appointmentData)
+        await newAppointment.save()
+
+        res.json({success:true, message:"Appointment booked successfully", appointment: newAppointment})
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({success:false, message:error.message})
+    }
+}
+
+// API to get user appointments
+const getUserAppointments = async (req, res) => {
+    try {
+        const userId = req.body.userId
+
+        const appointments = await appointmentModel.find({ userId })
+            .populate('doctorId', 'name speciality image fees available')
+            .sort({ createdAt: -1 })
+
+        res.json({success:true, appointments})
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({success:false, message:error.message})
+    }
+}
+
+// API to cancel appointment
+const cancelAppointment = async (req, res) => {
+    try {
+        const { appointmentId } = req.body
+        const userId = req.body.userId
+
+        // Find the appointment
+        const appointment = await appointmentModel.findOne({
+            _id: appointmentId,
+            userId
+        })
+
+        if (!appointment) {
+            return res.status(404).json({success:false, message:"Appointment not found"})
+        }
+
+        // Check if appointment can be cancelled
+        if (appointment.status === 'cancelled') {
+            return res.status(400).json({success:false, message:"Appointment is already cancelled"})
+        }
+
+        if (appointment.status === 'completed') {
+            return res.status(400).json({success:false, message:"Cannot cancel completed appointment"})
+        }
+
+        // Update appointment status
+        appointment.status = 'cancelled'
+        await appointment.save()
+
+        res.json({success:true, message:"Appointment cancelled successfully"})
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({success:false, message:error.message})
+    }
+}
+
+// API to process payment for appointment
+const processAppointmentPayment = async (req, res) => {
+    try {
+        const { appointmentId, paymentData } = req.body
+        const userId = req.body.userId
+
+        // Find the appointment
+        const appointment = await appointmentModel.findOne({
+            _id: appointmentId,
+            userId
+        })
+
+        if (!appointment) {
+            return res.status(404).json({success:false, message:"Appointment not found"})
+        }
+
+        // Check if appointment is pending payment
+        if (appointment.status !== 'pending_payment') {
+            return res.status(400).json({success:false, message:"Appointment payment is not pending"})
+        }
+
+        // Update appointment with payment details
+        appointment.payment = {
+            paymentId: paymentData.paymentId,
+            method: paymentData.method,
+            cardLast4: paymentData.cardLast4,
+            amount: paymentData.amount
+        }
+        appointment.status = 'confirmed'
+        appointment.paidAt = new Date()
+
+        await appointment.save()
+
+        res.json({success:true, message:"Payment processed successfully", appointment})
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({success:false, message:error.message})
+    }
+}
+
+// API to update appointment slots in doctor model (for slot blocking)
+const updateDoctorSlots = async (doctorId, date, time, action = 'book') => {
+    try {
+        const doctor = await doctorModel.findById(doctorId)
+        if (!doctor) return false
+
+        let slotsBooked = doctor.slots_booked || {}
+        
+        if (!slotsBooked[date]) {
+            slotsBooked[date] = []
+        }
+
+        if (action === 'book') {
+            if (!slotsBooked[date].includes(time)) {
+                slotsBooked[date].push(time)
+            }
+        } else if (action === 'cancel') {
+            slotsBooked[date] = slotsBooked[date].filter(slot => slot !== time)
+        }
+
+        await doctorModel.findByIdAndUpdate(doctorId, { slots_booked: slotsBooked })
+        return true
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
+export {registerUser, loginUser, getProfile, updateProfile, bookAppointment, getUserAppointments, cancelAppointment, processAppointmentPayment, updateDoctorSlots}

@@ -339,7 +339,7 @@ const Appointment = () => {
                       <p>
                         🆔{" "}
                         <span className="font-medium text-xs">
-                          ID: {currentDoctorAppointment.id}
+                          ID: {currentDoctorAppointment._id}
                         </span>
                       </p>
                     </div>
@@ -347,9 +347,9 @@ const Appointment = () => {
 
                   {/* Cancel Button */}
                   <button
-                    onClick={() => {
-                      const success = cancelAppointment(
-                        currentDoctorAppointment.id
+                    onClick={async () => {
+                      const success = await cancelAppointment(
+                        currentDoctorAppointment._id
                       );
                       if (success) {
                         setCurrentDoctorAppointment(null);
@@ -387,7 +387,7 @@ const Appointment = () => {
                   </h3>
                   <div className="space-y-2 max-h-32 overflow-y-auto">
                     {userAppointments
-                      .filter((apt) => apt.id !== currentDoctorAppointment?.id)
+                      .filter((apt) => apt._id !== currentDoctorAppointment?._id)
                       .slice(0, 3)
                       .map((apt, index) => (
                         <div

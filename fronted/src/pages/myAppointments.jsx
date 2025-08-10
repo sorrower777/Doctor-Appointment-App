@@ -75,17 +75,11 @@ const MyAppointments = () => {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = (paymentData) => {
+  const handlePaymentSuccess = async (paymentData) => {
     if (selectedAppointment) {
-      const success = processPayment(selectedAppointment.id, paymentData);
+      const success = await processPayment(selectedAppointment._id, paymentData);
       if (success) {
-        // Update local state
-        const updatedAppointments = appointments.map(apt =>
-          apt.id === selectedAppointment.id
-            ? { ...apt, status: 'confirmed', payment: paymentData, paidAt: new Date().toISOString() }
-            : apt
-        );
-        setAppointments(updatedAppointments);
+        // Update local state will be handled by the context
         setShowPaymentModal(false);
         setSelectedAppointment(null);
         toast.success(`Payment completed successfully for appointment with Dr. ${selectedAppointment.doctorName}`);
@@ -103,20 +97,17 @@ const MyAppointments = () => {
     setShowCancelModal(true);
   };
 
-  const confirmCancelAppointment = () => {
+  const confirmCancelAppointment = async () => {
     if (appointmentToCancel) {
-      const success = cancelAppointment(appointmentToCancel.appointmentId);
+      const success = await cancelAppointment(appointmentToCancel.appointmentId);
       if (success) {
-        // Update local state
-        const updatedAppointments = appointments.filter(
-          (apt) => apt.id !== appointmentToCancel.appointmentId
-        );
-        setAppointments(updatedAppointments);
+        // Update local state will be handled by the context
         toast.success(
           `Appointment with Dr. ${appointmentToCancel.doctorName} cancelled successfully`
         );
       }
       setAppointmentToCancel(null);
+      setShowCancelModal(false);
     }
   };
 
@@ -125,17 +116,14 @@ const MyAppointments = () => {
     setShowRemoveModal(true);
   };
 
-  const confirmRemovePastAppointment = () => {
+  const confirmRemovePastAppointment = async () => {
     if (appointmentToRemove) {
-      const success = removePastAppointment(appointmentToRemove.appointmentId);
+      const success = await removePastAppointment(appointmentToRemove.appointmentId);
       if (success) {
-        // Update local state
-        const updatedAppointments = appointments.filter(
-          (apt) => apt.id !== appointmentToRemove.appointmentId
-        );
-        setAppointments(updatedAppointments);
+        // Update local state will be handled by the context
       }
       setAppointmentToRemove(null);
+      setShowRemoveModal(false);
     }
   };
 
@@ -479,11 +467,11 @@ const MyAppointments = () => {
                       </div>
 
                       <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span>🆔 {appointment.id}</span>
+                        <span>🆔 {appointment._id}</span>
                         <span>•</span>
                         <span>
                           Booked on{" "}
-                          {new Date(appointment.bookedAt).toLocaleDateString()}
+                          {new Date(appointment.createdAt || appointment.bookedAt).toLocaleDateString()}
                         </span>
                         {appointment.payment && (
                           <>
@@ -519,7 +507,7 @@ const MyAppointments = () => {
                         <button
                           onClick={() =>
                             handleCancelAppointment(
-                              appointment.id,
+                              appointment._id,
                               appointment.doctorName
                             )
                           }
@@ -534,7 +522,7 @@ const MyAppointments = () => {
                         <button
                           onClick={() =>
                             handleRemovePastAppointment(
-                              appointment.id,
+                              appointment._id,
                               appointment.doctorName,
                               appointment.date,
                               appointment.time
