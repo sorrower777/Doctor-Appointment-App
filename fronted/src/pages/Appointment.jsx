@@ -69,6 +69,8 @@ const Appointment = () => {
     "9:00 AM",
     "10:30 AM",
     "12:00 PM",
+    "12:30 PM",
+    "1:30 PM",
     "2:30 PM",
     "4:00 PM",
     "5:30 PM",
@@ -107,10 +109,6 @@ const Appointment = () => {
         setRelatedDoctors(related);
       }
 
-      // console.log('Found doctor info:', foundDoc);
-      // console.log('Doctor image:', foundDoc?.image);
-    } else {
-      // console.log('No doctors available or no docid provided');
     }
   }, [docid, doctors]);
 
