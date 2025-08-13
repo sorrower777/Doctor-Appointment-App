@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
 
@@ -184,9 +184,9 @@ const AppContextProvider = (props) => {
   };
 
   // Check if user is authenticated
-  const isAuthenticated = () => {
+  const isAuthenticated = useCallback(() => {
     return !!(user && token);
-  };
+  }, [user, token]);
 
   // Book appointment function with payment
   const bookAppointment = async (appointmentData, paymentData = null) => {
@@ -262,11 +262,13 @@ const AppContextProvider = (props) => {
     if (!isAuthenticated()) return;
     
     try {
+      console.log("Loading user appointments from backend...");
       const response = await axios.get(backendUrl + '/api/user/appointments', {
         headers: { token }
       });
 
       if (response.data.success) {
+        console.log("Received appointments from backend:", response.data.appointments);
         setAppointments(response.data.appointments);
         // Save to localStorage
         localStorage.setItem("appointments", JSON.stringify(response.data.appointments));
@@ -314,6 +316,7 @@ const AppContextProvider = (props) => {
     }
 
     try {
+      console.log("Cancelling appointment:", appointmentId);
       const response = await axios.post(backendUrl + '/api/user/cancel-appointment', {
         appointmentId
       }, {
@@ -321,6 +324,7 @@ const AppContextProvider = (props) => {
       });
 
       if (response.data.success) {
+        console.log("Appointment cancelled successfully, reloading appointments...");
         toast.success("Appointment cancelled successfully");
         await loadUserAppointments(); // Refresh appointments
         return true;
@@ -336,11 +340,13 @@ const AppContextProvider = (props) => {
   };
 
   // Get user's appointments (excluding cancelled ones)
-  const getUserAppointments = () => {
+  const getUserAppointments = useCallback(() => {
     if (!isAuthenticated()) return [];
     // Filter out cancelled appointments as a safety measure
-    return appointments.filter(appointment => appointment.status !== 'cancelled');
-  };
+    const filteredAppointments = appointments.filter(appointment => appointment.status !== 'cancelled');
+    console.log("getUserAppointments called, filtered appointments:", filteredAppointments);
+    return filteredAppointments;
+  }, [appointments, isAuthenticated]);
 
   // Check if user has appointment with specific doctor on specific date/time
   const hasAppointmentConflict = (doctorId, date, time) => {
@@ -378,14 +384,14 @@ const AppContextProvider = (props) => {
     }
 
     try {
-      const response = await axios.post(backendUrl + '/api/user/cancel-appointment', {
+      const response = await axios.post(backendUrl + '/api/user/remove-appointment', {
         appointmentId
       }, {
         headers: { token }
       });
 
       if (response.data.success) {
-        toast.success("Past appointment removed successfully");
+        toast.success("Appointment removed successfully");
         await loadUserAppointments(); // Refresh appointments
         return true;
       } else {

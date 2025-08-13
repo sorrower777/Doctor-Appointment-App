@@ -261,6 +261,38 @@ const cancelAppointment = async (req, res) => {
     }
 }
 
+// API to permanently remove appointment (for completed/cancelled appointments)
+const removeAppointment = async (req, res) => {
+    try {
+        const { appointmentId } = req.body
+        const userId = req.body.userId
+
+        // Find the appointment
+        const appointment = await appointmentModel.findOne({
+            _id: appointmentId,
+            userId
+        })
+
+        if (!appointment) {
+            return res.status(404).json({success:false, message:"Appointment not found"})
+        }
+
+        // Only allow removal of cancelled or completed appointments
+        if (appointment.status !== 'cancelled' && appointment.status !== 'completed') {
+            return res.status(400).json({success:false, message:"Can only remove cancelled or completed appointments"})
+        }
+
+        // Delete the appointment permanently
+        await appointmentModel.findByIdAndDelete(appointmentId)
+
+        res.json({success:true, message:"Appointment removed successfully"})
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({success:false, message:error.message})
+    }
+}
+
 // API to process payment for appointment
 const processAppointmentPayment = async (req, res) => {
     try {
@@ -330,4 +362,4 @@ const updateDoctorSlots = async (doctorId, date, time, action = 'book') => {
     }
 }
 
-export {registerUser, loginUser, getProfile, updateProfile, bookAppointment, getUserAppointments, cancelAppointment, processAppointmentPayment, updateDoctorSlots}
+export {registerUser, loginUser, getProfile, updateProfile, bookAppointment, getUserAppointments, cancelAppointment, removeAppointment, processAppointmentPayment, updateDoctorSlots}

@@ -19,6 +19,7 @@ const MyAppointments = () => {
   const [appointmentToCancel, setAppointmentToCancel] = useState(null);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [appointmentToRemove, setAppointmentToRemove] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -34,52 +35,50 @@ const MyAppointments = () => {
 
   // Additional effect to watch for context appointments changes
   useEffect(() => {
-    if (isAuthenticated() && rawAppointments) {
+    if (isAuthenticated()) {
       const userAppointments = getUserAppointments();
       setAppointments(userAppointments);
-      setFilteredAppointments(userAppointments);
-    }
-  }, [rawAppointments, isAuthenticated, getUserAppointments]);
+      
+      // Apply the current filter to the new appointments
+      let filtered = [...userAppointments];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-  useEffect(() => {
-    let filtered = [...appointments];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+      // Filter out any cancelled appointments as a safety measure
+      filtered = filtered.filter(apt => apt.status !== 'cancelled');
 
-    // First, filter out any cancelled appointments as a safety measure
-    filtered = filtered.filter(apt => apt.status !== 'cancelled');
-
-    // Apply filter
-    if (filter === "upcoming") {
-      filtered = filtered.filter((apt) => {
-        const aptDate = new Date(apt.date);
-        aptDate.setHours(0, 0, 0, 0);
-        return aptDate >= today;
-      });
-    } else if (filter === "past") {
-      filtered = filtered.filter((apt) => {
-        const aptDate = new Date(apt.date);
-        aptDate.setHours(0, 0, 0, 0);
-        return aptDate < today;
-      });
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      if (sortBy === "date") {
-        return (
-          new Date(a.date + " " + a.time) - new Date(b.date + " " + b.time)
-        );
-      } else if (sortBy === "doctor") {
-        return a.doctorName.localeCompare(b.doctorName);
-      } else if (sortBy === "speciality") {
-        return a.speciality.localeCompare(b.speciality);
+      // Apply filter
+      if (filter === "upcoming") {
+        filtered = filtered.filter((apt) => {
+          const aptDate = new Date(apt.date);
+          aptDate.setHours(0, 0, 0, 0);
+          return aptDate >= today;
+        });
+      } else if (filter === "past") {
+        filtered = filtered.filter((apt) => {
+          const aptDate = new Date(apt.date);
+          aptDate.setHours(0, 0, 0, 0);
+          return aptDate < today;
+        });
       }
-      return 0;
-    });
 
-    setFilteredAppointments(filtered);
-  }, [appointments, filter, sortBy]);
+      // Apply sorting
+      filtered.sort((a, b) => {
+        if (sortBy === "date") {
+          return (
+            new Date(a.date + " " + a.time) - new Date(b.date + " " + b.time)
+          );
+        } else if (sortBy === "doctor") {
+          return a.doctorName.localeCompare(b.doctorName);
+        } else if (sortBy === "speciality") {
+          return a.speciality.localeCompare(b.speciality);
+        }
+        return 0;
+      });
+
+      setFilteredAppointments(filtered);
+    }
+  }, [rawAppointments, isAuthenticated, getUserAppointments, filter, sortBy, refreshKey]);
 
   // Payment handlers
   const handlePayment = (appointment) => {
@@ -113,11 +112,8 @@ const MyAppointments = () => {
     if (appointmentToCancel) {
       const success = await cancelAppointment(appointmentToCancel.appointmentId);
       if (success) {
-        // Refresh the appointments list
-        const updatedAppointments = getUserAppointments();
-        setAppointments(updatedAppointments);
-        setFilteredAppointments(updatedAppointments);
-        
+        // Force a refresh by updating the refresh key
+        setRefreshKey(prev => prev + 1);
         toast.success(
           `Appointment with Dr. ${appointmentToCancel.doctorName} cancelled successfully`
         );

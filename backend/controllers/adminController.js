@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import validator from "validator";
 import { v2 as cloudinary } from "cloudinary";
 import doctorModel from "../models/doctorModel.js";
+import userModel from "../models/userModel.js";
 import JWT from "jsonwebtoken";
 import appointmentModel from "../models/appointmentModel.js";
 
@@ -189,6 +190,83 @@ const appointmentCancel = async (req, res) => {
   }
 };
 
+// API to permanently delete cancelled/completed appointments
+const deleteAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.body;
+    const appointment = await appointmentModel.findById(appointmentId);
+    
+    if (!appointment) {
+      return res.json({ success: false, message: "Appointment not found" });
+    }
+
+    // Only allow deletion of cancelled or completed appointments
+    if (appointment.status !== 'cancelled' && appointment.status !== 'completed') {
+      return res.json({ success: false, message: "Can only delete cancelled or completed appointments" });
+    }
+
+    await appointmentModel.findByIdAndDelete(appointmentId);
+    res.json({ success: true, message: "Appointment deleted permanently" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// API to cleanup old appointments (completed/cancelled older than 30 days)
+const cleanupOldAppointments = async (req, res) => {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const result = await appointmentModel.deleteMany({
+      $and: [
+        {
+          $or: [
+            { status: 'cancelled' },
+            { status: 'completed' }
+          ]
+        },
+        {
+          date: { $lt: thirtyDaysAgo.toISOString().split('T')[0] }
+        }
+      ]
+    });
+
+    res.json({ 
+      success: true, 
+      message: `Cleaned up ${result.deletedCount} old appointments`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// API to mark past appointments as completed
+const markPastAppointmentsCompleted = async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const result = await appointmentModel.updateMany({
+      date: { $lt: today },
+      status: 'confirmed'
+    }, {
+      status: 'completed'
+    });
+
+    res.json({ 
+      success: true, 
+      message: `Marked ${result.modifiedCount} past appointments as completed`,
+      updatedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 // API to get dashboard data for admin panel
 const  adminDashboard = async (req, res) => {
   try {
@@ -216,5 +294,8 @@ export {
   changeAvailability,
   appointmentsAdmin,
   appointmentCancel,
+  deleteAppointment,
+  cleanupOldAppointments,
+  markPastAppointmentsCompleted,
   adminDashboard
 };

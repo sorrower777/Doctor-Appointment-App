@@ -1,16 +1,17 @@
 import { createContext } from "react";
 // eslint-disable-next-line react-refresh/only-export-components
 export const AdminContext = createContext()
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
-
+import React from "react";
 
 const AdminContextProvider = (props) => {
     const [aToken, setAToken] = useState(localStorage.getItem('aToken')? localStorage.getItem('aToken'): '');
     const [doctors, setDoctors] = useState([]);
     const [appointments, setAppointments] = useState([]);
     const [dashData, setDashData] = useState(false)
+    const [highlightedAppointment, setHighlightedAppointment] = useState(null)
     const backendUrl = import.meta.env.VITE_BACKEND_URL
 
     const getAllDoctors = async () => {
@@ -64,6 +65,7 @@ const AdminContextProvider = (props) => {
             if (data.success){
                 toast.success(data.message)
                 getAllAppointments()
+                getDashData() // Refresh dashboard data
             }else {
                 toast.error(data.message)
                 console.log(data.dashData)
@@ -74,7 +76,55 @@ const AdminContextProvider = (props) => {
         }
     }
 
-    const getDashData = async () => {
+    const deleteAppointment = async (appointmentId) => {
+        try {
+            const { data } = await axios.post(backendUrl + '/api/admin/delete-appointment', {appointmentId}, {headers:{aToken}})
+            if (data.success){
+                toast.success(data.message)
+                getAllAppointments()
+                getDashData() // Refresh dashboard data
+            }else {
+                toast.error(data.message)
+            }
+        }
+        catch(error) {
+            toast.error(error.message)
+        }
+    }
+
+    const cleanupOldAppointments = async () => {
+        try {
+            const { data } = await axios.post(backendUrl + '/api/admin/cleanup-appointments', {}, {headers:{aToken}})
+            if (data.success){
+                toast.success(`${data.message} (${data.deletedCount} appointments removed)`)
+                getAllAppointments()
+                getDashData() // Refresh dashboard data
+            }else {
+                toast.error(data.message)
+            }
+        }
+        catch(error) {
+            toast.error(error.message)
+        }
+    }
+
+    const markPastAppointmentsCompleted = async () => {
+        try {
+            const { data } = await axios.post(backendUrl + '/api/admin/mark-past-completed', {}, {headers:{aToken}})
+            if (data.success){
+                toast.success(`${data.message} (${data.updatedCount} appointments updated)`)
+                getAllAppointments()
+                getDashData() // Refresh dashboard data
+            }else {
+                toast.error(data.message)
+            }
+        }
+        catch(error) {
+            toast.error(error.message)
+        }
+    }
+
+    const getDashData = useCallback(async () => {
         try {
             const {data} = await axios.get(backendUrl + '/api/admin/dashboard', {headers: {aToken}})
             if(data.success){
@@ -87,13 +137,14 @@ const AdminContextProvider = (props) => {
         catch(error) {
             toast.error(error.message)
         }
-    }
+    }, [backendUrl, aToken])
 
     const value = {
         aToken,setAToken,
         backendUrl, doctors, getAllDoctors, changeAvailability,
-        appointments, setAppointments, getAllAppointments, cancelAppointment,
-        getDashData, dashData
+        appointments, setAppointments, getAllAppointments, cancelAppointment, deleteAppointment, cleanupOldAppointments, markPastAppointmentsCompleted,
+        getDashData, dashData,
+        highlightedAppointment, setHighlightedAppointment
 
     }
 
