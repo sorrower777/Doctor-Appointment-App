@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-export const DoctorContext = createContext()
+const DoctorContext = createContext()
 
 const DoctorContextProvider = (props) => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -147,4 +147,6 @@ const DoctorContextProvider = (props) => {
         </DoctorContext.Provider>
     )
 }
+
 export default DoctorContextProvider;
+export { DoctorContext };
