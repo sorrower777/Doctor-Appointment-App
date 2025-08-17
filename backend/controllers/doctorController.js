@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
 import jwt from "jsonwebtoken";
+import { v2 as cloudinary } from "cloudinary";
 
 const changeAvailability = async (req, res) => {
     try {
@@ -176,10 +177,51 @@ const doctorProfile = async (req, res) => {
 // API to update doctor profile from doctor panel
 const updateDoctorProfile = async (req, res) => {
     try {
-        const { doctorId, fees, address, available } = req.body
+        const { doctorId, fees, address, available, image } = req.body
         
-        await doctorModel.findByIdAndUpdate(doctorId, { fees, address, available })
+        const updateData = { fees, address, available }
+        if (image) {
+            updateData.image = image
+        }
+        
+        await doctorModel.findByIdAndUpdate(doctorId, updateData)
         res.json({ success: true, message: 'Profile Updated' })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// API to upload doctor profile image
+const uploadDoctorImage = async (req, res) => {
+    try {
+        // Try to get doctorId from multiple sources
+        const doctorId = req.body.doctorId || req.doctorId
+        
+        if (!doctorId) {
+            return res.json({ success: false, message: 'Doctor ID not found' })
+        }
+        
+        if (!req.file) {
+            return res.json({ success: false, message: 'No image file provided' })
+        }
+        
+        // Upload to Cloudinary using buffer
+        const result = await cloudinary.uploader.upload(`data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`, {
+            folder: 'doctor-images',
+            width: 500,
+            height: 500,
+            crop: 'limit'
+        })
+        
+        // Update doctor's image in database
+        await doctorModel.findByIdAndUpdate(doctorId, { image: result.secure_url })
+        
+        res.json({ 
+            success: true, 
+            message: 'Image uploaded successfully',
+            imageUrl: result.secure_url
+        })
     } catch (error) {
         console.log(error)
         res.json({ success: false, message: error.message })
@@ -195,5 +237,6 @@ export {
     appointmentCancel, 
     doctorDashboard, 
     doctorProfile, 
-    updateDoctorProfile 
+    updateDoctorProfile,
+    uploadDoctorImage
 };

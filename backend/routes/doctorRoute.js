@@ -7,9 +7,11 @@ import {
     appointmentCancel, 
     doctorDashboard, 
     doctorProfile, 
-    updateDoctorProfile 
+    updateDoctorProfile,
+    uploadDoctorImage
 } from '../controllers/doctorController.js';
 import authDoctor from '../middlewares/authDoctor.js';
+import upload from '../middlewares/multer.js';
 
 const doctorRouter = express.Router();
 
@@ -21,5 +23,6 @@ doctorRouter.post('/cancel-appointment', authDoctor, appointmentCancel);
 doctorRouter.get('/dashboard', authDoctor, doctorDashboard);
 doctorRouter.get('/profile', authDoctor, doctorProfile);
 doctorRouter.post('/update-profile', authDoctor, updateDoctorProfile);
+doctorRouter.post('/upload-image', authDoctor, upload.single('image'), uploadDoctorImage);
 
 export default doctorRouter;

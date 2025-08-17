@@ -11,11 +11,12 @@ const authDoctor = async (req, res, next) => {
         
         const token_decode = jwt.verify(dtoken, process.env.JWT_SECRET)
         
-        // Ensure req.body exists before setting doctorId
+        // Store doctorId in both req.body and req for better compatibility with file uploads
         if (!req.body) {
             req.body = {}
         }
         req.body.doctorId = token_decode.id
+        req.doctorId = token_decode.id  // Also store directly on req object
         
         next()
     } catch (error) {

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import { DoctorContext } from '../../context/DoctorContext'
 
 const DoctorProfile = () => {
@@ -10,6 +10,10 @@ const DoctorProfile = () => {
   const [fees, setFees] = useState('')
   const [address, setAddress] = useState({})
   const [available, setAvailable] = useState(false)
+  
+  // Image upload states
+  const [previewImage, setPreviewImage] = useState('')
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (dToken) {
@@ -22,16 +26,77 @@ const DoctorProfile = () => {
       setFees(profileData.fees || '')
       setAddress(profileData.address || {})
       setAvailable(profileData.available || false)
+      setPreviewImage(profileData.image || '')
     }
   }, [profileData])
 
-  const updateProfileHandler = async () => {
+  // Handle image file selection
+  const handleImageClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size should not exceed 5MB')
+      return
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Create preview URL immediately
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setPreviewImage(e.target.result)
+    }
+    reader.readAsDataURL(file)
+
+    // Upload image immediately
+    const formData = new FormData()
+    formData.append('image', file)
+    
     try {
+      const response = await fetch(`${profileData.backendUrl || 'http://localhost:4000'}/api/doctor/upload-image`, {
+        method: 'POST',
+        headers: {
+          'dtoken': dToken
+        },
+        body: formData
+      })
+      
+      const data = await response.json()
+      if (data.success) {
+        // Update the preview image with uploaded URL
+        setPreviewImage(data.imageUrl)
+        // Refresh profile data to get the updated image
+        await getProfileData()
+        alert('Image uploaded successfully!')
+      } else {
+        throw new Error(data.message)
+      }
+    } catch (error) {
+      console.error('Image upload failed:', error)
+      alert('Failed to upload image. Please try again.')
+      // Reset preview to original image on error
+      setPreviewImage(profileData.image || '')
+    }
+  }
+
+  const updateProfileHandler = async () => {
+    try {      
       await updateProfile({
         fees,
         address,
         available
       })
+      
       setIsEdit(false)
     } catch (error) {
       console.log(error)
@@ -53,11 +118,40 @@ const DoctorProfile = () => {
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="text-center">
-              <img 
-                className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-gray-200 mb-4" 
-                src={profileData.image} 
-                alt="Doctor" 
-              />
+              
+              <div className="relative mb-4">
+                <img 
+                  className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-gray-200 cursor-pointer transition-all duration-200 hover:border-blue-400 block" 
+                  src={previewImage || profileData.image || 'https://via.placeholder.com/150x150/cccccc/666666?text=Doctor'} 
+                  alt="Doctor" 
+                  onClick={handleImageClick}
+                  key={previewImage || profileData.image} // Force re-render when URL changes
+                  style={{ 
+                    width: '128px',
+                    height: '128px',
+                    objectFit: 'cover',
+                    backgroundColor: '#f0f0f0'
+                  }}
+                  onLoad={() => {
+                    console.log('Image loaded successfully')
+                  }}
+                  onError={(e) => {
+                    console.log('Image load error, using fallback')
+                    e.target.src = 'https://via.placeholder.com/150x150/cccccc/666666?text=Error'
+                  }}
+                />
+                {/* Simple text hint below image */}
+                <p className="text-xs text-gray-500 text-center mt-2 opacity-0 hover:opacity-100 transition-opacity">Click to change photo</p>
+                
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-1">{profileData.name}</h2>
               <p className="text-lg text-blue-600 font-medium mb-2">{profileData.speciality}</p>
               <p className="text-gray-600 mb-4">{profileData.degree}</p>
