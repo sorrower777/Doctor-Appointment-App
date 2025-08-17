@@ -2,6 +2,7 @@ import validator from 'validator'
 import bcrypt from 'bcrypt'
 import JWT from 'jsonwebtoken'
 import {v2 as cloudinary} from 'cloudinary'
+import mongoose from 'mongoose'
 import userModel from '../models/userModel.js'
 import appointmentModel from '../models/appointmentModel.js'
 import doctorModel from '../models/doctorModel.js'
@@ -227,14 +228,37 @@ const getUserAppointments = async (req, res) => {
 // API to cancel appointment
 const cancelAppointment = async (req, res) => {
     try {
+        console.log('Cancel appointment request body:', req.body);
         const { appointmentId } = req.body
         const userId = req.body.userId
+
+        console.log('Extracted appointmentId:', appointmentId);
+        console.log('Extracted userId:', userId);
+
+        if (!appointmentId) {
+            return res.status(400).json({success:false, message:"Appointment ID is required"})
+        }
+
+        if (!userId) {
+            return res.status(400).json({success:false, message:"User authentication required"})
+        }
+
+        // Validate ObjectId format
+        if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+            return res.status(400).json({success:false, message:"Invalid appointment ID format"})
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({success:false, message:"Invalid user ID format"})
+        }
 
         // Find the appointment
         const appointment = await appointmentModel.findOne({
             _id: appointmentId,
             userId
         })
+
+        console.log('Found appointment:', appointment);
 
         if (!appointment) {
             return res.status(404).json({success:false, message:"Appointment not found"})
@@ -267,6 +291,14 @@ const removeAppointment = async (req, res) => {
         const { appointmentId } = req.body
         const userId = req.body.userId
 
+        if (!appointmentId) {
+            return res.status(400).json({success:false, message:"Appointment ID is required"})
+        }
+
+        if (!userId) {
+            return res.status(400).json({success:false, message:"User ID is required"})
+        }
+
         // Find the appointment
         const appointment = await appointmentModel.findOne({
             _id: appointmentId,
@@ -277,9 +309,13 @@ const removeAppointment = async (req, res) => {
             return res.status(404).json({success:false, message:"Appointment not found"})
         }
 
-        // Only allow removal of cancelled or completed appointments
-        if (appointment.status !== 'cancelled' && appointment.status !== 'completed') {
-            return res.status(400).json({success:false, message:"Can only remove cancelled or completed appointments"})
+        // Check if appointment is in the past
+        const appointmentDateTime = new Date(`${appointment.date} ${appointment.time}`);
+        const now = new Date();
+        
+        // Only allow removal of past appointments or cancelled appointments
+        if (appointmentDateTime >= now && appointment.status !== 'cancelled') {
+            return res.status(400).json({success:false, message:"Can only remove past appointments or cancelled appointments"})
         }
 
         // Delete the appointment permanently
