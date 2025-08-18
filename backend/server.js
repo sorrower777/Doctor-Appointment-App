@@ -29,7 +29,7 @@ if (process.env.NODE_ENV === 'production') {
 app.use(express.json({ limit: '10mb' }))
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://your-frontend-domain.com', 'https://your-admin-domain.com'] 
+        ? true // Allow all origins for now - update with your actual domains later
         : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
     credentials: true
 }))
