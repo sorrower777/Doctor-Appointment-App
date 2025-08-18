@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { assets } from "../assets/assets_admin/assets";
 import { useContext } from "react";
 import { DoctorContext } from "../context/DoctorContext";
-import { useSidebar } from "../context/SidebarContext";
+import { useSidebar } from "../hooks/useSidebar";
 
 const Sidebar = React.memo(() => {
   const { aToken } = useContext(AdminContext);

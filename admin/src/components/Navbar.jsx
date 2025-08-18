@@ -3,7 +3,7 @@ import { assets } from '../assets/assets_admin/assets'
 import { useContext } from 'react';
 import { AdminContext } from '../context/AdminContext.jsx'
 import { DoctorContext } from '../context/DoctorContext.jsx'
-import { useSidebar } from '../context/SidebarContext.jsx'
+import { useSidebar } from '../hooks/useSidebar'
 
 const Navbar = () => {
     const {aToken, setAToken} = useContext(AdminContext)
