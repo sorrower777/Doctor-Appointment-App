@@ -1,13 +1,27 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { AdminContext } from "../context/AdminContext";
 import { NavLink } from "react-router-dom";
 import { assets } from "../assets/assets_admin/assets";
 import { useContext } from "react";
 import { DoctorContext } from "../context/DoctorContext";
+import { useSidebar } from "../context/SidebarContext";
 
 const Sidebar = React.memo(() => {
   const { aToken } = useContext(AdminContext);
   const { dToken } = useContext(DoctorContext);
+  const { isMobileMenuOpen, setIsMobileMenuOpen, isMobile, toggleMobileMenu } = useSidebar();
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('.sidebar-container')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
   // Memoize menu items to prevent recreation on every render
   const adminMenuItems = useMemo(() => [
@@ -60,7 +74,57 @@ const Sidebar = React.memo(() => {
   ], []);
 
   return (
-    <div className="w-64 min-h-screen bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 shadow-sm">
+    <>
+      {/* Mobile Menu Toggle Button */}
+      {isMobile && (
+        <button
+          onClick={toggleMobileMenu}
+          className="fixed top-4 left-4 z-50 md:hidden bg-primary text-white p-2 rounded-lg shadow-lg hover:bg-primary/90 transition-colors"
+          aria-label="Toggle menu"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            {isMobileMenuOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            )}
+          </svg>
+        </button>
+      )}
+
+      {/* Overlay for mobile */}
+      {isMobile && isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <div 
+        className={`sidebar-container ${
+          isMobile
+            ? `fixed top-0 left-0 z-50 w-64 h-full bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 shadow-xl transform transition-transform duration-300 ease-in-out ${
+                isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+              }`
+            : 'w-64 min-h-screen bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 shadow-sm'
+        }`}
+      >
       {aToken && (
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
@@ -253,7 +317,8 @@ const Sidebar = React.memo(() => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 });
 

@@ -20,73 +20,81 @@ const Dashboard = () => {
   }
   
   return dashData ? (
-    <div className='m-5'>
-      <div className='flex flex-wrap gap-3'>
+    <div className='p-4 md:p-6 max-w-7xl mx-auto'>
+      {/* Statistics Cards */}
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8'>
         {/* Doctors Card */}
-        <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all'>
-          <img className='w-14' src={assets.doctor_icon} alt="Doctor Icon"/>
+        <div className='flex items-center gap-4 bg-white p-6 rounded-lg border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-md'>
+          <div className="p-3 bg-blue-100 rounded-full">
+            <img className='w-8 h-8' src={assets.doctor_icon} alt="Doctor Icon"/>
+          </div>
           <div>
-            <p className='text-xl font-semibold text-gray-600'>{dashData.doctors}</p>
-            <p className='text-gray-400'>Doctors</p>
+            <p className='text-2xl font-bold text-gray-700'>{dashData.doctors}</p>
+            <p className='text-gray-500 font-medium'>Doctors</p>
           </div>
         </div>
 
         {/* Appointments Card */}
-        <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all'>
-          <img className='w-14' src={assets.appointments_icon} alt="Appointments Icon"/>
+        <div className='flex items-center gap-4 bg-white p-6 rounded-lg border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-md'>
+          <div className="p-3 bg-green-100 rounded-full">
+            <img className='w-8 h-8' src={assets.appointments_icon} alt="Appointments Icon"/>
+          </div>
           <div>
-            <p className='text-xl font-semibold text-gray-600'>{dashData.appointments}</p>
-            <p className='text-gray-400'>Appointments</p>
+            <p className='text-2xl font-bold text-gray-700'>{dashData.appointments}</p>
+            <p className='text-gray-500 font-medium'>Appointments</p>
           </div>
         </div>
 
         {/* Patients Card */}
-        <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all'>
-          <img className='w-14' src={assets.patients_icon} alt="Patients Icon"/>
+        <div className='flex items-center gap-4 bg-white p-6 rounded-lg border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all shadow-sm hover:shadow-md sm:col-span-2 lg:col-span-1'>
+          <div className="p-3 bg-purple-100 rounded-full">
+            <img className='w-8 h-8' src={assets.patients_icon} alt="Patients Icon"/>
+          </div>
           <div>
-            <p className='text-xl font-semibold text-gray-600'>{dashData.patients}</p>
-            <p className='text-gray-400'>Patients</p>
+            <p className='text-2xl font-bold text-gray-700'>{dashData.patients}</p>
+            <p className='text-gray-500 font-medium'>Patients</p>
           </div>
         </div>
       </div>
 
       {/* Latest Appointments */}
-      <div className='bg-white'>
-        <div className='flex items-center gap-2.5 px-4 py-4 mt-10 rounded-t border'>
+      <div className='bg-white rounded-lg shadow-sm border'>
+        <div className='flex items-center gap-2.5 px-4 md:px-6 py-4 border-b bg-gray-50 rounded-t-lg'>
           <img src={assets.list_icon} alt="List Icon"/>
-          <p className='font-semibold'>Latest Bookings</p>
+          <p className='font-semibold text-gray-800'>Latest Bookings</p>
           <span className='text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full ml-auto'>Click to view details</span>
         </div>
 
-        <div className='pt-4 border border-t-0'>
+        <div className='divide-y divide-gray-100'>
           {dashData.latestAppointments && dashData.latestAppointments.map((item, index) => (
             <div 
-              className='flex items-center px-6 py-3 gap-3 hover:bg-blue-50 cursor-pointer transition-all duration-200 border-l-4 border-transparent hover:border-blue-400 hover:shadow-sm' 
+              className='flex items-center px-4 md:px-6 py-4 gap-3 hover:bg-blue-50 cursor-pointer transition-all duration-200 border-l-4 border-transparent hover:border-blue-400 hover:shadow-sm' 
               key={index}
               onClick={() => handleBookingClick(item._id)}
               title="Click to view appointment details"
             >
-              <img className='rounded-full w-10' src={item.doctorImage} alt="Doctor"/>
-              <div className='flex-1 text-sm'>
-                <p className='text-gray-800 font-medium'>{item.doctorName}</p>
-                <p className='text-gray-600'>{item.date}</p>
+              <img className='rounded-full w-10 h-10 object-cover' src={item.doctorImage} alt="Doctor"/>
+              <div className='flex-1 text-sm min-w-0'>
+                <p className='text-gray-800 font-medium truncate'>{item.doctorName}</p>
+                <p className='text-gray-600 text-xs md:text-sm'>{item.date}</p>
               </div>
-              <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-2 flex-shrink-0'>
                 {item.status === 'cancelled' ? 
                   <p className='text-red-400 text-xs font-medium'>Cancelled</p> : 
                   item.status === 'completed' ? 
                   <p className='text-green-500 text-xs font-medium'>Completed</p> :
-                  <img 
+                  <button 
                     onClick={(e) => {
                       e.stopPropagation()
                       cancelAppointment(item._id)
                     }} 
-                    className='w-10 cursor-pointer hover:scale-110 transition-transform' 
-                    src={assets.cancel_icon} 
-                    alt="Cancel"
-                  />
+                    className='w-8 h-8 flex items-center justify-center hover:bg-red-100 rounded-full transition-colors' 
+                    title="Cancel appointment"
+                  >
+                    <img className='w-5 h-5' src={assets.cancel_icon} alt="Cancel" />
+                  </button>
                 }
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>

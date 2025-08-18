@@ -21,3 +21,147 @@ html {
 ::-webkit-scrollbar{
   @apply hidden;
 }
+
+/* Mobile Responsive Enhancements */
+
+/* Touch-friendly interactions */
+.touch-friendly {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Better mobile typography scaling */
+@media (max-width: 640px) {
+  .mobile-h1 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+  }
+  
+  .mobile-h2 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  .mobile-p {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+/* Improved mobile card hover effects */
+@media (hover: hover) {
+  .mobile-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Mobile-first button styles */
+.mobile-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+
+@media (min-width: 768px) {
+  .mobile-btn {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Enhanced mobile navigation */
+.mobile-nav-transition {
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Mobile-optimized spacing */
+.mobile-container {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .mobile-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Responsive grid improvements */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Mobile-safe animations */
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-animate {
+    animation-duration: 0.3s;
+    animation-timing-function: ease-out;
+  }
+}
+
+/* Better focus states for mobile accessibility */
+.mobile-focus:focus {
+  outline: 2px solid #5f6fff;
+  outline-offset: 2px;
+}
+
+/* Mobile-optimized modal positioning */
+.mobile-modal {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .mobile-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    bottom: auto;
+    right: auto;
+    border-radius: 1rem;
+    max-height: 80vh;
+  }
+}

@@ -1,0 +1,208 @@
+/* Enhanced Mobile Responsiveness Styles */
+
+/* Touch-friendly buttons and interactions */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Improved mobile typography */
+@media (max-width: 640px) {
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .mobile-text-base {
+    font-size: 1rem;
+  }
+  
+  .mobile-text-lg {
+    font-size: 1.125rem;
+  }
+}
+
+/* Better mobile spacing */
+.mobile-spacing {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .mobile-spacing {
+    padding: 1.5rem;
+  }
+}
+
+/* Responsive tables with horizontal scroll */
+.mobile-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.mobile-table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.mobile-table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.mobile-table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Mobile-first card design */
+.mobile-card {
+  @apply bg-white rounded-lg shadow-sm border p-4 mb-4;
+}
+
+@media (min-width: 768px) {
+  .mobile-card {
+    @apply p-6 mb-6;
+  }
+}
+
+/* Responsive sidebar overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Mobile navigation enhancements */
+.mobile-nav-item {
+  @apply block w-full text-left px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200;
+}
+
+/* Touch-friendly form inputs */
+.mobile-input {
+  @apply w-full px-4 py-3 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+}
+
+/* Responsive grid utilities */
+.mobile-grid {
+  @apply grid grid-cols-1 gap-4;
+}
+
+@media (min-width: 640px) {
+  .mobile-grid {
+    @apply grid-cols-2 gap-6;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-grid {
+    @apply grid-cols-3;
+  }
+}
+
+/* Mobile-optimized buttons */
+.mobile-btn {
+  @apply w-full sm:w-auto px-6 py-3 text-base font-medium rounded-lg transition-all duration-200 touch-target;
+}
+
+.mobile-btn-primary {
+  @apply mobile-btn bg-primary text-white hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:ring-offset-2;
+}
+
+.mobile-btn-secondary {
+  @apply mobile-btn bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+}
+
+/* Mobile-specific animations */
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .mobile-animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive image containers */
+.mobile-img-container {
+  @apply relative overflow-hidden rounded-lg;
+  aspect-ratio: 1 / 1;
+}
+
+@media (min-width: 768px) {
+  .mobile-img-container {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* Mobile-optimized modals */
+.mobile-modal {
+  @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4;
+}
+
+.mobile-modal-content {
+  @apply w-full max-w-md bg-white rounded-t-lg sm:rounded-lg shadow-xl transform transition-all;
+}
+
+/* Safe area handling for mobile devices */
+.mobile-safe-area {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Mobile-specific scroll behavior */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Improved mobile focus styles */
+.mobile-focus:focus {
+  @apply outline-none ring-2 ring-primary ring-offset-2;
+}
+
+/* Mobile-optimized dropdown */
+.mobile-dropdown {
+  @apply absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50;
+}
+
+@media (min-width: 768px) {
+  .mobile-dropdown {
+    @apply left-auto right-auto min-w-48;
+  }
+}
