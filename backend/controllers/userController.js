@@ -137,7 +137,7 @@ const updateProfile = async (req, res) => {
 
         if(imageFile) {
             console.log('Image file received:', imageFile); // Add debug log
-            const imageUpload = await cloudinary.uploader.upload(imageFile.path,{resource_type: "image"})
+            const imageUpload = await cloudinary.uploader.upload(imageFile.originalname ,{resource_type: "image"})
             const imageURL = imageUpload.secure_url
             await userModel.findByIdAndUpdate(userId, {image:imageURL})
         }
