@@ -178,7 +178,7 @@ const doctorProfile = async (req, res) => {
 const updateDoctorProfile = async (req, res) => {
     try {
         const { doctorId, fees, address, available, image } = req.body
-        
+        console.log(image)
         const updateData = { fees, address, available }
         if (image) {
             updateData.image = image
