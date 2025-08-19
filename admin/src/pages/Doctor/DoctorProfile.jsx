@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState, useRef } from 'react'
 import { DoctorContext } from '../../context/DoctorContext'
+import { toast } from 'react-toastify'
 
 const DoctorProfile = () => {
   
@@ -89,13 +90,13 @@ const DoctorProfile = () => {
         setImageRefreshKey(Date.now())
         // Refresh profile data to get the updated image
         await getProfileData()
-        alert('Image uploaded successfully!')
+        toast('Image uploaded successfully!')
       } else {
         throw new Error(data.message)
       }
     } catch (error) {
       console.error('Image upload failed:', error)
-      alert(`Failed to upload image: ${error.message}. Please try again.`)
+      toast(`Failed to upload image: ${error.message}. Please try again.`)
       // Reset preview to original image on error
       setPreviewImage(profileData.image || '')
     }
