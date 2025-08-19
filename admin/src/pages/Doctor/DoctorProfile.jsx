@@ -3,7 +3,7 @@ import { DoctorContext } from '../../context/DoctorContext'
 
 const DoctorProfile = () => {
   
-  const { profileData, getProfileData, dToken, updateProfile } = useContext(DoctorContext)
+  const { profileData, getProfileData, dToken, updateProfile, backendUrl } = useContext(DoctorContext)
   
   // Form states
   const [isEdit, setIsEdit] = useState(false)
@@ -13,6 +13,7 @@ const DoctorProfile = () => {
   
   // Image upload states
   const [previewImage, setPreviewImage] = useState('')
+  const [imageRefreshKey, setImageRefreshKey] = useState(Date.now())
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -27,6 +28,7 @@ const DoctorProfile = () => {
       setAddress(profileData.address || {})
       setAvailable(profileData.available || false)
       setPreviewImage(profileData.image || '')
+      setImageRefreshKey(Date.now()) // Refresh image when profile data changes
     }
   }, [profileData])
 
@@ -62,8 +64,11 @@ const DoctorProfile = () => {
     const formData = new FormData()
     formData.append('image', file)
     
+    console.log('Uploading image to:', `${backendUrl}/api/doctor/upload-image`)
+    console.log('Using token:', dToken ? 'Token present' : 'No token')
+    
     try {
-      const response = await fetch(`${profileData.backendUrl || 'http://localhost:4000'}/api/doctor/upload-image`, {
+      const response = await fetch(`${backendUrl}/api/doctor/upload-image`, {
         method: 'POST',
         headers: {
           'dtoken': dToken
@@ -71,10 +76,17 @@ const DoctorProfile = () => {
         body: formData
       })
       
+      console.log('Upload response status:', response.status)
+      
       const data = await response.json()
+      console.log('Upload response data:', data)
+      
       if (data.success) {
-        // Update the preview image with uploaded URL
-        setPreviewImage(data.imageUrl)
+        // Update the preview image with uploaded URL and add cache busting
+        const imageUrlWithCacheBust = `${data.imageUrl}?t=${Date.now()}`
+        setPreviewImage(imageUrlWithCacheBust)
+        // Force refresh of the image
+        setImageRefreshKey(Date.now())
         // Refresh profile data to get the updated image
         await getProfileData()
         alert('Image uploaded successfully!')
@@ -83,7 +95,7 @@ const DoctorProfile = () => {
       }
     } catch (error) {
       console.error('Image upload failed:', error)
-      alert('Failed to upload image. Please try again.')
+      alert(`Failed to upload image: ${error.message}. Please try again.`)
       // Reset preview to original image on error
       setPreviewImage(profileData.image || '')
     }
@@ -122,10 +134,10 @@ const DoctorProfile = () => {
               <div className="relative mb-4">
                 <img 
                   className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-gray-200 cursor-pointer transition-all duration-200 hover:border-blue-400 block" 
-                  src={previewImage || profileData.image || 'https://via.placeholder.com/150x150/cccccc/666666?text=Doctor'} 
+                  src={previewImage || `${profileData.image}?refresh=${imageRefreshKey}` || 'https://via.placeholder.com/150x150/cccccc/666666?text=Doctor'} 
                   alt="Doctor" 
                   onClick={handleImageClick}
-                  key={previewImage || profileData.image} // Force re-render when URL changes
+                  key={`${previewImage || profileData.image}-${imageRefreshKey}`} // Force re-render when URL changes
                   style={{ 
                     width: '128px',
                     height: '128px',
