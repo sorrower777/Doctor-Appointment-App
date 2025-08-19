@@ -59,10 +59,34 @@ const addDoctor = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // upload image to cloudinary
-    const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-      resource_type: "image",
-    });
-    const imageUrl = imageUpload.secure_url;
+    try {
+        // Validate file size (5MB max)
+        if (imageFile.size > 5 * 1024 * 1024) {
+            return res.status(400).json({success: false, message: "Image file too large. Maximum size is 5MB"});
+        }
+        
+        // Validate file type
+        if (!imageFile.mimetype.startsWith('image/')) {
+            return res.status(400).json({success: false, message: "Only image files are allowed"});
+        }
+        
+        // Convert buffer to base64 data URL for cloudinary upload
+        const b64 = Buffer.from(imageFile.buffer).toString("base64");
+        const dataURI = "data:" + imageFile.mimetype + ";base64," + b64;
+        
+        const imageUpload = await cloudinary.uploader.upload(dataURI, {
+          resource_type: "image",
+          folder: "doctor_profiles", // Optional: organize uploads in folders
+          transformation: [
+              { width: 500, height: 500, crop: "limit" }, // Optimize image size
+              { quality: "auto" } // Auto quality optimization
+          ]
+        });
+        var imageUrl = imageUpload.secure_url;
+    } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({success: false, message: "Failed to upload image. Please try again."});
+    }
     const doctorData = {
       name,
       email,

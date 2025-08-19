@@ -137,9 +137,38 @@ const updateProfile = async (req, res) => {
 
         if(imageFile) {
             console.log('Image file received:', imageFile); // Add debug log
-            const imageUpload = await cloudinary.uploader.upload(imageFile.originalname ,{resource_type: "image"})
-            const imageURL = imageUpload.secure_url
-            await userModel.findByIdAndUpdate(userId, {image:imageURL})
+            
+            try {
+                // Validate file size (5MB max)
+                if (imageFile.size > 5 * 1024 * 1024) {
+                    return res.status(400).json({success: false, message: "Image file too large. Maximum size is 5MB"});
+                }
+                
+                // Validate file type
+                if (!imageFile.mimetype.startsWith('image/')) {
+                    return res.status(400).json({success: false, message: "Only image files are allowed"});
+                }
+                
+                // Convert buffer to base64 data URL for cloudinary upload
+                const b64 = Buffer.from(imageFile.buffer).toString("base64");
+                const dataURI = "data:" + imageFile.mimetype + ";base64," + b64;
+                
+                const imageUpload = await cloudinary.uploader.upload(dataURI, {
+                    resource_type: "image",
+                    folder: "user_profiles", // Optional: organize uploads in folders
+                    transformation: [
+                        { width: 500, height: 500, crop: "limit" }, // Optimize image size
+                        { quality: "auto" } // Auto quality optimization
+                    ]
+                });
+                const imageURL = imageUpload.secure_url;
+                await userModel.findByIdAndUpdate(userId, {image: imageURL});
+                
+                console.log('Profile image updated successfully:', imageURL);
+            } catch (uploadError) {
+                console.error('Cloudinary upload error:', uploadError);
+                return res.status(500).json({success: false, message: "Failed to upload image. Please try again."});
+            }
         }
         res.json({success:true, message:"Profile updated successfully"})
 
