@@ -9,3 +9,4 @@ console.log("CLOUDINARY_API_KEY:", process.env.CLOUDINARY_API_KEY ? "***SET***" 
 console.log("CLOUDINARY_SECRET_KEY:", process.env.CLOUDINARY_SECRET_KEY ? "***SET***" : "NOT SET");
 console.log("MONGODB_URI:", process.env.MONGODB_URI ? "***SET***" : "NOT SET");
 console.log("MONGODB_URL:", process.env.MONGODB_URL ? "***SET***" : "NOT SET");
+console.log("PORT:", process.env.PORT || 4000);
