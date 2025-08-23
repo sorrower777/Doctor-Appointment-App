@@ -13,12 +13,14 @@ import MyAppointments from "./pages/myAppointments.jsx";
 import MyProfile from "./pages/myProfile.jsx";
 import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Chat from "./components/Chat.jsx";
 
 const App = () => {
   return (
     <div className="mx-4 sm:mx-[10%]">
       <ToastContainer />
       <Navbar />
+      <Chat />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
